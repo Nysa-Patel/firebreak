@@ -1,6 +1,11 @@
-"""One-off script to load seed_data/clean_air_locations.json into the DB.
+"""Seed seed_data/clean_air_locations.json into the DB.
 
-Run with: python -m scripts.seed_db
+Idempotent (skips if already seeded), so app.main also calls this at startup
+-- Render's free tier has no convenient one-off shell for a Postgres
+instance, so the app seeding itself on boot means a fresh Postgres database
+doesn't require manual intervention after deploy.
+
+Run standalone with: python -m scripts.seed_db
 """
 
 import json
@@ -12,7 +17,7 @@ from app.models.db_models import CleanAirLocation
 _SEED_FILE = Path(__file__).resolve().parent.parent / "seed_data" / "clean_air_locations.json"
 
 
-def main() -> None:
+def seed_clean_air_locations() -> None:
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
     try:
@@ -30,4 +35,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    seed_clean_air_locations()
