@@ -11,7 +11,24 @@ const GAUGE_MAX = 300; // clamp display scale; hazardous (301+) pins to the righ
 const TRACK_GRADIENT =
   "linear-gradient(90deg, var(--status-good) 0%, var(--status-warning) 33%, var(--status-serious) 66%, var(--status-critical) 100%)";
 
-export function AqiGauge({ aqi }: { aqi: AqiResponse | null }) {
+interface Props {
+  aqi: AqiResponse | null;
+  status?: "loading" | "ready" | "error";
+}
+
+export function AqiGauge({ aqi, status = "ready" }: Props) {
+  if (status === "loading") {
+    return (
+      <div className="card p-5 animate-pulse">
+        <SectionLabel>Official air quality</SectionLabel>
+        <p className="text-sm mt-2" style={{ color: "var(--text-muted)" }}>
+          Loading -- if the backend has been idle it can take up to a minute
+          to wake back up.
+        </p>
+      </div>
+    );
+  }
+
   if (!aqi || aqi.aqi == null) {
     return (
       <div className="card p-5">

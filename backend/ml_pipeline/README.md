@@ -4,61 +4,89 @@
 
 The original spec called for a 4-class density scale (clear / light haze /
 moderate / heavy). We collapsed this to **3 classes (clear / hazy / heavy)**
-because the source datasets are annotated for smoke *detection*
-(smoke vs. no-smoke, or bounding boxes), not density grading -- there is no
-existing 4-way density label to train against. Building a defensible 3-class
-weak-labeling pipeline was judged more honest than forcing a 4th class with
-no real signal behind it.
+because none of the source datasets are annotated for smoke *density*
+directly -- they're annotated for smoke *detection* (smoke vs. no-smoke, or
+bounding boxes). Building a defensible 3-class weak-labeling pipeline was
+judged more honest than forcing a 4th class with no real signal behind it.
 
 ## Data sources
 
-| Dataset | Use | License |
-|---|---|---|
-| [AI For Mankind classification dataset](https://github.com/aiformankind/wildfire-smoke-dataset) (smoke / no-smoke, ~1,340 images) | Primary and only source -- no-smoke images become `clear`, smoke images are further split into `hazy`/`heavy` (see below) | CC BY-NC-SA 4.0 |
+The first version of this model trained on a single Southern California
+camera network (HPWREN), which meant it had never seen wildfire smoke
+against a different sky, vegetation, or camera style. This version adds two
+more sources, chosen specifically for geographic diversity rather than
+volume:
 
-Traces back to public-domain **HPWREN** wildfire camera imagery, annotated by
-AI For Mankind and volunteers. **Attribution to AI For Mankind and HPWREN is
-required and included in the app's About/credits page and this repo.** The
-CC BY-NC-SA license means this specific trained model is for non-commercial
-(competition/research) use -- noted explicitly in the presentation, since it
-affects any claim about production/commercial readiness.
+| Dataset | Region | Images used | Label signal | License |
+|---|---|---|---|---|
+| [AI For Mankind classification dataset](https://github.com/aiformankind/wildfire-smoke-dataset) | Southern California, USA (HPWREN cameras) | 1,340 | Timestamp-offset-from-onset (weak heuristic -- see below) | CC BY-NC-SA 4.0 |
+| [Pyronear (pyro-sdis)](https://huggingface.co/datasets/pyronear/pyro-sdis) | France (Force 06, SDIS 07/12/77 fire-service camera network) | 6,500 (subsampled from 33,636) | **Real YOLO bounding boxes** -> smoke-coverage-area | Apache-2.0 |
+| [SAINet](https://huggingface.co/datasets/SAINetset/SAINetset_v8.0) | Cordoba, Argentina (SAI surveillance nodes, AlterMundi) | 5,551 (full dataset) | **Real YOLO bounding boxes** -> smoke-coverage-area | CC BY 4.0 |
 
-(The bounding-box and cloud/fog datasets from the same project were
-considered for a coverage-area-based density signal, but were dropped to keep
-the pipeline shippable in the time available -- see the timestamp-offset
-method below instead.)
+**13,391 images total** (up from 1,340), spanning three continents. This is
+still not "works everywhere" -- there's no Australian, Mediterranean-Europe,
+or Southeast-Asian wildfire imagery here, and all three sources are
+fixed-position lookout/surveillance cameras, not handheld phone photos like
+the app's own crowd-submission feature produces. It's a meaningfully broader
+sample than one region, not a claim of global coverage -- see "Known bias"
+below for what's still missing.
+
+**Attribution required by license:** AI For Mankind and HPWREN (CC
+BY-NC-SA 4.0); Pyronear / SDIS 06, 07, 12, 77 (Apache 2.0); SAINet /
+AlterMundi (CC BY 4.0). Because one of the three sources is
+non-commercial-only, **the combined trained model is restricted to
+non-commercial use** (competition/research) regardless of the other two
+sources' more permissive terms -- noted in the presentation, since it affects
+any claim about production/commercial readiness.
 
 ## Weak-labeling methodology (documented, not oversold)
 
-Each image's filename encodes `{unix_timestamp}_{offset_seconds}.jpg`, where
-`offset_seconds` is AI For Mankind's own label for time relative to that
-camera sequence's fire-detection onset (negative = before, positive = after).
-We reuse this existing metadata as a density proxy instead of inventing a new
-signal:
+Two different labeling signals are used, because only two of the three
+sources ship real bounding boxes:
 
-1. `no_smoke/` images -> `clear`.
-2. `smoke/` images with `offset_seconds <= 600` (within 10 minutes of onset,
-   smoke just starting) -> `hazy`.
-3. `smoke/` images with `offset_seconds > 600` (established plume) -> `heavy`.
+**Pyronear + SAINet (real bounding boxes):** each image's YOLO label file
+gives actual smoke box coordinates. Coverage = sum of box areas / image area
+(`scripts/bbox_utils.py`). No boxes -> `clear`. The hazy/heavy split point
+is the **median of the pooled nonzero coverage values across both sources**,
+computed at preprocessing time (not a hardcoded guess) -- currently ~0.0016
+(0.16% of frame), which makes sense for early-detection fire-lookout cameras
+built to catch a thin, distant wisp of smoke as early as possible, not a
+frame-filling plume. This is a genuine density signal, not a heuristic.
 
-See `scripts/preprocess_weak_label.py`. This is a **weak-labeling
-heuristic** riding on the dataset's own sequence metadata, not an
-expert-annotated density grade -- time-since-onset correlates with plume
-buildup but isn't a guaranteed proxy (wind can disperse smoke just as easily
-as accumulate it). A random 150-image sample is written to
-`spot_check_sample.txt` for manual spot-checking; disagreements found there
-are noted in `eval_report.md` alongside the model metrics, so judges see how
-noisy the label source is, not just how well the model fits it.
+**HPWREN / AI For Mankind (no bounding boxes available):** filenames encode
+`{unix_timestamp}_{offset_seconds}.jpg`, where `offset_seconds` is time
+relative to that camera sequence's fire-detection onset. `no_smoke/` ->
+`clear`; `smoke/` with `offset_seconds <= 600` -> `hazy`; `>600` -> `heavy`.
+This remains a **weaker proxy** than bbox coverage -- time-since-onset
+correlates with plume buildup but isn't guaranteed (wind disperses smoke as
+often as it accumulates it) -- which is exactly why the two newer sources use
+the stronger bbox-based signal instead. A random 150-image sample spanning
+all three sources is written to `spot_check_sample.txt` for manual review;
+disagreements found there are noted in `eval_report.md`.
+
+See `scripts/preprocess_weak_label.py` for the full merge logic, and
+`scripts/extract_pyronear.py` for how the Pyronear subsample was pulled out
+of the upstream Hugging Face dataset (it ships as parquet, not individual
+files, and 33,636 images was more than a season-1 training budget needed --
+SAINet, at 5,551, was small enough to use in full).
 
 ## Known bias
 
-HPWREN cameras are concentrated in **Southern California**; the model is
-therefore trained almost entirely on one region's smoke/terrain/lighting
-conditions. Performance on wildfire smoke in other geographies (Pacific
-Northwest, the app's own Chico/Butte County demo region, let alone
-non-US wildfire contexts) is untested and likely to degrade -- flagged
-explicitly in the app UI copy and the ethics section of the presentation,
-not just in this doc.
+Better than the single-region baseline, but still not global:
+- All three sources are **fixed-position lookout/surveillance cameras**, not
+  handheld photos -- the app's own crowd-submission feature (arbitrary phone
+  cameras, arbitrary angles) is a meaningfully different distribution the
+  model has never trained on.
+- Geographic coverage is North America (SoCal) + Western Europe (France) +
+  South America (Argentina) -- no Australia, Mediterranean Europe, Southeast
+  Asia, or sub-Saharan Africa, all real wildfire regions.
+- Pyronear's cameras are tuned for *early detection* (thin, distant smoke),
+  which is why its coverage values skew small -- the model may be
+  under-exposed to close-range, frame-filling smoke relative to how a phone
+  photo taken by someone standing near a fire would look.
+
+Flagged explicitly in the app UI copy and the ethics section of the
+presentation, not just in this doc.
 
 ## False negatives
 
@@ -72,6 +100,9 @@ someone with asthma could be falsely reassured. Mitigations:
 
 ## Pipeline
 
-`download_datasets.py` -> `preprocess_weak_label.py` -> `train.py` ->
-`evaluate.py` -> `export_onnx.py`. See each script's docstring. Run all from
-`backend/`, e.g. `python -m ml_pipeline.scripts.download_datasets`.
+`download_datasets.py` (HPWREN) + `extract_pyronear.py` (Pyronear, requires
+`pip install datasets` from `requirements-training.txt`) + a direct
+`huggingface_hub.snapshot_download` for SAINet -> `preprocess_weak_label.py`
+(merges all three) -> `train.py` -> `evaluate.py` -> `export_onnx.py`. See
+each script's docstring. Run all from `backend/`, e.g.
+`python -m ml_pipeline.scripts.download_datasets`.

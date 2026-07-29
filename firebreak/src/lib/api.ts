@@ -12,13 +12,60 @@ import type {
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
 
-async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, init);
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`${init?.method ?? "GET"} ${path} failed (${res.status}): ${body}`);
+// Render's free tier spins the backend down after inactivity -- the first
+// request after a cold start can take 30-60s to come back, which a bare
+// fetch with the browser's default timeout will fail well before. Retrying
+// with a generous per-attempt timeout covers a cold start without making
+// every normal (already-warm) request feel slow.
+const REQUEST_TIMEOUT_MS = 20_000;
+const MAX_ATTEMPTS = 3;
+const RETRY_DELAY_MS = 3_000;
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function fetchWithTimeout(url: string, init: RequestInit | undefined, timeoutMs: number): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
   }
-  return res.json() as Promise<T>;
+}
+
+async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
+  let lastError: unknown;
+
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    try {
+      const res = await fetchWithTimeout(`${API_BASE}${path}`, init, REQUEST_TIMEOUT_MS);
+      if (!res.ok) {
+        // 502/503/504 are what a still-waking-up Render instance returns
+        // via its proxy before the app is actually listening -- worth a
+        // retry. Other 4xx/5xx are real errors, not a cold start.
+        if ([502, 503, 504].includes(res.status) && attempt < MAX_ATTEMPTS) {
+          await sleep(RETRY_DELAY_MS);
+          continue;
+        }
+        const body = await res.text();
+        throw new Error(`${init?.method ?? "GET"} ${path} failed (${res.status}): ${body}`);
+      }
+      return (await res.json()) as T;
+    } catch (err) {
+      lastError = err;
+      const isAbort = err instanceof DOMException && err.name === "AbortError";
+      const isNetworkError = err instanceof TypeError; // fetch's generic "Failed to fetch"
+      if ((isAbort || isNetworkError) && attempt < MAX_ATTEMPTS) {
+        await sleep(RETRY_DELAY_MS);
+        continue;
+      }
+      throw err;
+    }
+  }
+
+  throw lastError;
 }
 
 export function getAqi(lat: number, lon: number): Promise<AqiResponse> {
@@ -71,4 +118,14 @@ export function getCleanAirLocations(
 
 export function getTrend(lat: number, lon: number): Promise<TrendResponse> {
   return apiFetch(`/api/trend?lat=${lat}&lon=${lon}`);
+}
+
+/** Fire a lightweight request immediately on page load to start waking a
+ * sleeping Render instance in parallel with everything else, so the real
+ * data calls that follow are more likely to land on an already-warm
+ * backend instead of each independently eating a cold-start timeout. */
+export function pingBackend(): void {
+  fetch(`${API_BASE}/health`).catch(() => {
+    /* best-effort -- failures here are fine, the real calls still retry */
+  });
 }

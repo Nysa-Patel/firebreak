@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getAqi, getCleanAirLocations, getTrend, scoreRisk } from "@/lib/api";
+import { getAqi, getCleanAirLocations, getTrend, pingBackend, scoreRisk } from "@/lib/api";
 import { useGeolocation } from "@/lib/useGeolocation";
 import { useRiskProfile } from "@/lib/useRiskProfile";
 import type { AqiResponse, CleanAirLocationOut, ClassifySmokeResponse, RiskScoreResponse, TrendResponse } from "@/lib/types";
@@ -17,14 +17,30 @@ export default function Home() {
   const { profile, setProfile, loaded: profileLoaded } = useRiskProfile();
 
   const [aqi, setAqi] = useState<AqiResponse | null>(null);
+  const [aqiStatus, setAqiStatus] = useState<"loading" | "ready" | "error">("loading");
   const [smokeResult, setSmokeResult] = useState<ClassifySmokeResponse | null>(null);
   const [riskResult, setRiskResult] = useState<RiskScoreResponse | null>(null);
   const [locations, setLocations] = useState<CleanAirLocationOut[]>([]);
   const [trend, setTrend] = useState<TrendResponse | null>(null);
 
   useEffect(() => {
+    // Kick the backend awake immediately (Render's free tier sleeps after
+    // inactivity) so the data calls below are more likely to land warm.
+    pingBackend();
+  }, []);
+
+  useEffect(() => {
     if (lat == null || lon == null) return;
-    getAqi(lat, lon).then(setAqi).catch(() => setAqi(null));
+    setAqiStatus("loading");
+    getAqi(lat, lon)
+      .then((result) => {
+        setAqi(result);
+        setAqiStatus("ready");
+      })
+      .catch(() => {
+        setAqi(null);
+        setAqiStatus("error");
+      });
     getCleanAirLocations(lat, lon).then(setLocations).catch(() => setLocations([]));
     getTrend(lat, lon).then(setTrend).catch(() => setTrend(null));
   }, [lat, lon]);
@@ -49,7 +65,7 @@ export default function Home() {
           <RecommendationCard result={riskResult} />
 
           <div className="grid sm:grid-cols-2 gap-5">
-            <AqiGauge aqi={aqi} />
+            <AqiGauge aqi={aqi} status={aqiStatus} />
             <TrendSparkline trend={trend} />
           </div>
 
