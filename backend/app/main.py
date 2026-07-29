@@ -20,10 +20,10 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "https://frontend-gamma-teal-57.vercel.app"],
+    allow_origins=["http://localhost:3000", "https://firebreak-nysagroup.vercel.app"],
     # Vercel gives every deploy (prod + each preview) its own subdomain under
     # the project -- the regex covers those without re-editing this on every push.
-    allow_origin_regex=r"https://frontend.*\.vercel\.app",
+    allow_origin_regex=r"https://firebreak.*\.vercel\.app",
     allow_methods=["*"],
     allow_headers=["*"],
 )
