@@ -1,0 +1,3 @@
+# Only needed for offline dataset download/training -- not a runtime
+# dependency of the deployed API (see backend/requirements.txt / Dockerfile).
+gdown==5.2.0

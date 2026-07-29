@@ -1,0 +1,19 @@
+fastapi==0.115.0
+uvicorn[standard]==0.32.0
+sqlalchemy==2.0.35
+pydantic==2.9.2
+pydantic-settings==2.5.2
+httpx==0.27.2
+python-multipart==0.0.12
+Pillow==10.4.0
+imagehash==4.3.1
+onnxruntime==1.19.2
+numpy==1.26.4
+python-dotenv==1.0.1
+psycopg2-binary==2.9.9
+
+# ml_pipeline only (training, not needed at inference time in prod)
+torch==2.4.1
+torchvision==0.19.1
+scikit-learn==1.5.2
+matplotlib==3.9.2

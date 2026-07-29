@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+
+# Node / Next.js
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/.vercel/
+
+# Env
+.env
+.env.local
+backend/.env
+
+# Training data and checkpoints (large, regenerable -- not committed).
+# The exported ONNX model IS committed (ml_pipeline/model/*.onnx*) since
+# that's the actual artifact the API serves -- see ml_pipeline/README.md.
+backend/ml_pipeline/data/raw/
+backend/ml_pipeline/data/processed/
+backend/ml_pipeline/spot_check_sample.txt
+*.pt
+*.h5
+*.ckpt
+
+# DB
+*.sqlite3
+*.db
+
+# OS
+.DS_Store
