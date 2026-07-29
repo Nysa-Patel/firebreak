@@ -12,7 +12,7 @@ Base.metadata.create_all(bind=engine)
 seed_clean_air_locations()
 
 app = FastAPI(
-    title="Wildfire Smoke Exposure Risk API",
+    title="Firebreak API",
     description="Personal wildfire smoke risk scoring combining CV smoke-density estimation, "
     "live AQI data, and crowd-sourced coverage of monitoring deserts.",
     version="0.1.0",

@@ -30,7 +30,7 @@ export function Header() {
       <div className="max-w-5xl mx-auto w-full px-4 h-14 flex items-center gap-6">
         <Link href="/" className="flex items-center gap-2 font-semibold text-[15px] shrink-0">
           <FlameIcon />
-          <span>Wildfire Risk</span>
+          <span>Firebreak</span>
         </Link>
         <nav className="flex items-center gap-1 text-sm">
           {NAV_LINKS.map((link) => {

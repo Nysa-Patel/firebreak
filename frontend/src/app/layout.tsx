@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Wildfire Smoke Exposure Risk",
+  title: "Firebreak -- Wildfire Smoke Exposure Risk",
   description: "Personalized wildfire smoke risk from live AQI, sky-photo smoke estimation, and community coverage.",
 };
 
