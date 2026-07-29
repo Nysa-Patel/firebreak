@@ -1,24 +1,22 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getAqi, getCleanAirLocations, getTrend, scoreRisk } from "@/lib/api";
 import { useGeolocation } from "@/lib/useGeolocation";
 import { useRiskProfile } from "@/lib/useRiskProfile";
 import type { AqiResponse, CleanAirLocationOut, ClassifySmokeResponse, RiskScoreResponse, TrendResponse } from "@/lib/types";
 import { RiskProfileForm } from "@/components/RiskProfileForm";
-import { AqiCard } from "@/components/AqiCard";
+import { AqiGauge } from "@/components/AqiGauge";
 import { PhotoClassifier } from "@/components/PhotoClassifier";
 import { RecommendationCard } from "@/components/RecommendationCard";
 import { CleanAirLocations } from "@/components/CleanAirLocations";
-import { TrendBadge } from "@/components/TrendBadge";
+import { TrendSparkline } from "@/components/TrendSparkline";
 
 export default function Home() {
-  const { lat, lon, error: geoError, loading: geoLoading } = useGeolocation();
+  const { lat, lon, error: geoError } = useGeolocation();
   const { profile, setProfile, loaded: profileLoaded } = useRiskProfile();
 
   const [aqi, setAqi] = useState<AqiResponse | null>(null);
-  const [aqiLoading, setAqiLoading] = useState(true);
   const [smokeResult, setSmokeResult] = useState<ClassifySmokeResponse | null>(null);
   const [riskResult, setRiskResult] = useState<RiskScoreResponse | null>(null);
   const [locations, setLocations] = useState<CleanAirLocationOut[]>([]);
@@ -26,11 +24,7 @@ export default function Home() {
 
   useEffect(() => {
     if (lat == null || lon == null) return;
-    setAqiLoading(true);
-    getAqi(lat, lon)
-      .then(setAqi)
-      .catch(() => setAqi(null))
-      .finally(() => setAqiLoading(false));
+    getAqi(lat, lon).then(setAqi).catch(() => setAqi(null));
     getCleanAirLocations(lat, lon).then(setLocations).catch(() => setLocations([]));
     getTrend(lat, lon).then(setTrend).catch(() => setTrend(null));
   }, [lat, lon]);
@@ -43,31 +37,30 @@ export default function Home() {
   }, [aqi, profile, profileLoaded, smokeResult]);
 
   return (
-    <main className="max-w-3xl mx-auto w-full px-4 py-8 space-y-6">
-      <header className="space-y-1">
-        <h1 className="text-2xl font-bold">Wildfire Smoke Exposure Risk</h1>
-        <p className="text-sm opacity-70">
-          Personalized smoke risk combining live AQI, a sky-photo smoke reading, and your profile --
-          not just a raw number.
+    <main className="max-w-5xl mx-auto w-full px-4 py-8">
+      {geoError && (
+        <p className="text-sm mb-4" style={{ color: "var(--status-warning)" }}>
+          {geoError}
         </p>
-        {geoError && <p className="text-xs text-amber-600 dark:text-amber-400">{geoError}</p>}
-        <Link href="/map" className="inline-block text-sm underline underline-offset-4">
-          View community coverage map →
-        </Link>
-      </header>
+      )}
 
-      <RecommendationCard result={riskResult} />
+      <div className="grid lg:grid-cols-[1fr_340px] gap-5 items-start">
+        <div className="space-y-5 min-w-0">
+          <RecommendationCard result={riskResult} />
 
-      <div className="grid sm:grid-cols-2 gap-4">
-        <AqiCard aqi={aqi} loading={aqiLoading || geoLoading} />
-        <TrendBadge trend={trend} />
+          <div className="grid sm:grid-cols-2 gap-5">
+            <AqiGauge aqi={aqi} />
+            <TrendSparkline trend={trend} />
+          </div>
+
+          <PhotoClassifier lat={lat} lon={lon} onClassified={setSmokeResult} />
+        </div>
+
+        <div className="space-y-5 min-w-0">
+          <RiskProfileForm profile={profile} onChange={setProfile} />
+          <CleanAirLocations locations={locations} />
+        </div>
       </div>
-
-      <PhotoClassifier lat={lat} lon={lon} onClassified={setSmokeResult} />
-
-      <RiskProfileForm profile={profile} onChange={setProfile} />
-
-      <CleanAirLocations locations={locations} />
     </main>
   );
 }

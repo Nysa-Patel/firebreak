@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { classifySmoke, submitPhoto } from "@/lib/api";
 import { DENSITY_COLOR, DENSITY_LABEL } from "@/lib/display";
+import { DENSITY_ICON } from "@/components/icons";
+import { SectionLabel } from "@/components/AqiGauge";
 import type { ClassifySmokeResponse } from "@/lib/types";
 
 interface Props {
@@ -13,12 +15,21 @@ interface Props {
 
 export function PhotoClassifier({ lat, lon, onClassified }: Props) {
   const [file, setFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [result, setResult] = useState<ClassifySmokeResponse | null>(null);
   const [status, setStatus] = useState<"idle" | "classifying" | "submitting" | "submitted" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    setPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
+
   async function handleFile(selected: File) {
     setFile(selected);
+    setResult(null);
     setStatus("classifying");
     setErrorMessage(null);
     try {
@@ -44,38 +55,76 @@ export function PhotoClassifier({ lat, lon, onClassified }: Props) {
     }
   }
 
+  const Icon = result ? DENSITY_ICON[result.density_class] : null;
+  const color = result ? DENSITY_COLOR[result.density_class] : undefined;
+
   return (
-    <div className="rounded-xl border border-black/10 dark:border-white/15 p-4 space-y-3">
-      <h2 className="font-semibold text-sm uppercase tracking-wide opacity-70">Sky photo</h2>
-      <p className="text-xs opacity-60">
+    <div className="card p-5">
+      <SectionLabel>Sky photo</SectionLabel>
+      <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>
         Take a photo of the sky to estimate local smoke density -- more precise than a distant
         station, especially in areas with sparse official monitoring.
       </p>
 
-      <input
-        type="file"
-        accept="image/*"
-        capture="environment"
-        onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
-        className="text-sm"
-      />
-
-      {status === "classifying" && <p className="text-sm opacity-70">Analyzing photo...</p>}
-
-      {result && (
-        <div className="flex items-center gap-3">
-          <span
-            className="size-3 rounded-full shrink-0"
-            style={{ backgroundColor: DENSITY_COLOR[result.density_class] }}
-            aria-hidden
+      <div className="flex items-start gap-4 mt-4">
+        <label
+          className="shrink-0 flex items-center justify-center rounded-lg overflow-hidden cursor-pointer"
+          style={{ width: 84, height: 84, background: "var(--surface-2)", border: "1px dashed var(--border)" }}
+        >
+          {previewUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element -- local object URL, not a remote asset worth next/image's optimization
+            <img src={previewUrl} alt="Uploaded sky photo preview" className="w-full h-full object-cover" />
+          ) : (
+            <span className="text-xs text-center px-1" style={{ color: "var(--text-muted)" }}>
+              Upload
+            </span>
+          )}
+          <input
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
+            className="hidden"
           />
-          <span className="font-medium">{DENSITY_LABEL[result.density_class]}</span>
-          <span className="text-xs opacity-60">{Math.round(result.confidence * 100)}% confidence</span>
+        </label>
+
+        <div className="flex-1 min-w-0">
+          {status === "classifying" && (
+            <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
+              Analyzing photo...
+            </p>
+          )}
+
+          {result && Icon && (
+            <>
+              <div className="flex items-center gap-2">
+                <span style={{ color }}>
+                  <Icon size={20} />
+                </span>
+                <span className="font-semibold">{DENSITY_LABEL[result.density_class]}</span>
+              </div>
+              <div className="mt-2 h-1.5 rounded-full max-w-[160px]" style={{ background: "var(--surface-2)" }}>
+                <div
+                  className="h-full rounded-full"
+                  style={{ width: `${Math.round(result.confidence * 100)}%`, background: color }}
+                />
+              </div>
+              <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
+                {Math.round(result.confidence * 100)}% confidence
+              </p>
+            </>
+          )}
+
+          {!result && status === "idle" && (
+            <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+              No photo yet.
+            </p>
+          )}
         </div>
-      )}
+      </div>
 
       {result?.model_source === "unavailable_stub" && (
-        <p className="text-xs text-amber-600 dark:text-amber-400">
+        <p className="text-xs mt-3" style={{ color: "var(--status-warning)" }}>
           Trained CV model not deployed yet -- this is a placeholder heuristic estimate.
         </p>
       )}
@@ -84,17 +133,22 @@ export function PhotoClassifier({ lat, lon, onClassified }: Props) {
         <button
           onClick={handleShareToMap}
           disabled={status === "submitting"}
-          className="text-sm rounded-md bg-foreground text-background px-3 py-1.5 disabled:opacity-50"
+          className="text-sm rounded-full px-4 py-2 mt-4 font-medium disabled:opacity-50"
+          style={{ background: "var(--accent)", color: "#fff" }}
         >
           {status === "submitting" ? "Sharing..." : "Share to community map"}
         </button>
       )}
       {status === "submitted" && (
-        <p className="text-sm text-green-600 dark:text-green-400">
+        <p className="text-sm mt-3" style={{ color: "var(--success-text)" }}>
           Shared -- thanks for helping fill in the coverage gap.
         </p>
       )}
-      {status === "error" && errorMessage && <p className="text-sm text-red-500">{errorMessage}</p>}
+      {status === "error" && errorMessage && (
+        <p className="text-sm mt-3" style={{ color: "var(--status-critical)" }}>
+          {errorMessage}
+        </p>
+      )}
     </div>
   );
 }

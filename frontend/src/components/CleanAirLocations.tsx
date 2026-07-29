@@ -1,32 +1,50 @@
 "use client";
 
 import type { CleanAirLocationOut } from "@/lib/types";
+import { LOCATION_ICON, LibraryIcon } from "@/components/icons";
+import { SectionLabel } from "@/components/AqiGauge";
 
 export function CleanAirLocations({ locations }: { locations: CleanAirLocationOut[] }) {
   if (locations.length === 0) {
     return (
-      <div className="rounded-xl border border-black/10 dark:border-white/15 p-4 text-sm opacity-70">
-        No seeded clean-air locations near you yet -- this demo dataset currently only covers the
-        Chico/Butte County, CA area.
+      <div className="card p-5">
+        <SectionLabel>Nearby clean-air spaces</SectionLabel>
+        <p className="text-sm mt-2" style={{ color: "var(--text-secondary)" }}>
+          No seeded clean-air locations near you yet -- this demo dataset currently only covers the
+          Chico/Butte County, CA area.
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="rounded-xl border border-black/10 dark:border-white/15 p-4 space-y-3">
-      <h2 className="font-semibold text-sm uppercase tracking-wide opacity-70">Nearby clean-air spaces</h2>
-      <ul className="space-y-2">
-        {locations.map((loc) => (
-          <li key={loc.id} className="text-sm flex justify-between gap-2">
-            <div>
-              <p className="font-medium">{loc.name}</p>
-              <p className="text-xs opacity-60">{loc.address}</p>
-            </div>
-            <span className="text-xs opacity-60 whitespace-nowrap">{loc.distance_km} km</span>
-          </li>
-        ))}
+    <div className="card p-5">
+      <SectionLabel>Nearby clean-air spaces</SectionLabel>
+      <ul className="mt-3 divide-y" style={{ borderColor: "var(--gridline)" }}>
+        {locations.map((loc) => {
+          const Icon = LOCATION_ICON[loc.category] ?? LibraryIcon;
+          return (
+            <li key={loc.id} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0" style={{ borderColor: "var(--gridline)" }}>
+              <span
+                className="inline-flex items-center justify-center rounded-full shrink-0"
+                style={{ width: 36, height: 36, background: "var(--surface-2)", color: "var(--accent)" }}
+              >
+                <Icon size={18} />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="font-medium truncate">{loc.name}</p>
+                <p className="text-xs truncate" style={{ color: "var(--text-muted)" }}>
+                  {loc.address}
+                </p>
+              </div>
+              <span className="text-xs shrink-0 font-medium" style={{ color: "var(--text-secondary)" }}>
+                {loc.distance_km} km
+              </span>
+            </li>
+          );
+        })}
       </ul>
-      <p className="text-xs opacity-50">
+      <p className="text-xs mt-3 pt-3" style={{ color: "var(--text-muted)", borderTop: "1px solid var(--border)" }}>
         Seeded demo dataset -- expandable to a community-maintained open dataset post-competition.
       </p>
     </div>

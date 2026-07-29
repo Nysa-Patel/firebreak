@@ -19,7 +19,7 @@ export function SmokeMap({ center, submissions, cleanAirLocations }: Props) {
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
 
-      <CircleMarker center={center} radius={8} pathOptions={{ color: "#3b82f6", fillOpacity: 0.8 }}>
+      <CircleMarker center={center} radius={8} pathOptions={{ color: "var(--accent)", fillOpacity: 0.8 }}>
         <Popup>You are roughly here</Popup>
       </CircleMarker>
 

@@ -1,6 +1,7 @@
 "use client";
 
 import type { RiskProfile } from "@/lib/types";
+import { SectionLabel } from "@/components/AqiGauge";
 
 interface Props {
   profile: RiskProfile;
@@ -9,14 +10,14 @@ interface Props {
 
 export function RiskProfileForm({ profile, onChange }: Props) {
   return (
-    <div className="rounded-xl border border-black/10 dark:border-white/15 p-4 space-y-3">
-      <h2 className="font-semibold text-sm uppercase tracking-wide opacity-70">Your risk profile</h2>
-      <p className="text-xs opacity-60">
+    <div className="card p-5">
+      <SectionLabel>Your risk profile</SectionLabel>
+      <p className="text-sm mt-1 mb-4" style={{ color: "var(--text-secondary)" }}>
         Stored only in this browser -- no account, no server-side profile. Used to personalize the
-        recommendation below.
+        recommendation above.
       </p>
 
-      <label className="flex items-center justify-between gap-4 text-sm">
+      <label className="flex items-center justify-between gap-4 py-2.5 text-sm" style={{ borderBottom: "1px solid var(--gridline)" }}>
         Age
         <input
           type="number"
@@ -24,7 +25,8 @@ export function RiskProfileForm({ profile, onChange }: Props) {
           max={120}
           value={profile.age}
           onChange={(e) => onChange({ ...profile, age: Number(e.target.value) })}
-          className="w-20 rounded border border-black/20 dark:border-white/20 bg-transparent px-2 py-1"
+          className="w-20 rounded-md px-2 py-1 text-right"
+          style={{ border: "1px solid var(--border)", background: "var(--surface-2)" }}
         />
       </label>
 
@@ -34,14 +36,19 @@ export function RiskProfileForm({ profile, onChange }: Props) {
           ["is_pregnant", "Pregnant"],
           ["has_outdoor_occupation", "Outdoor occupation"],
         ] as const
-      ).map(([key, label]) => (
-        <label key={key} className="flex items-center justify-between gap-4 text-sm">
+      ).map(([key, label], i, arr) => (
+        <label
+          key={key}
+          className="flex items-center justify-between gap-4 py-2.5 text-sm"
+          style={{ borderBottom: i === arr.length - 1 ? "none" : "1px solid var(--gridline)" }}
+        >
           {label}
           <input
             type="checkbox"
             checked={profile[key]}
             onChange={(e) => onChange({ ...profile, [key]: e.target.checked })}
             className="size-4"
+            style={{ accentColor: "var(--accent)" }}
           />
         </label>
       ))}

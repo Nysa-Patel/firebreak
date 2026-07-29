@@ -9,13 +9,16 @@ export const AQI_CATEGORY_LABEL: Record<AqiCategory, string> = {
   hazardous: "Hazardous",
 };
 
+// Mapped onto the fixed status palette (good/warning/serious/critical) via
+// CSS custom properties in globals.css -- never a raw hex here, so light/dark
+// and any future palette swap stay in one place.
 export const AQI_CATEGORY_COLOR: Record<AqiCategory, string> = {
-  good: "#22c55e",
-  moderate: "#eab308",
-  unhealthy_sensitive: "#f97316",
-  unhealthy: "#ef4444",
-  very_unhealthy: "#a855f7",
-  hazardous: "#7f1d1d",
+  good: "var(--status-good)",
+  moderate: "var(--status-good)",
+  unhealthy_sensitive: "var(--status-warning)",
+  unhealthy: "var(--status-serious)",
+  very_unhealthy: "var(--status-critical)",
+  hazardous: "var(--status-critical)",
 };
 
 export const DENSITY_LABEL: Record<DensityClass, string> = {
@@ -25,9 +28,9 @@ export const DENSITY_LABEL: Record<DensityClass, string> = {
 };
 
 export const DENSITY_COLOR: Record<DensityClass, string> = {
-  clear: "#22c55e",
-  hazy: "#f97316",
-  heavy: "#7f1d1d",
+  clear: "var(--status-good)",
+  hazy: "var(--status-warning)",
+  heavy: "var(--status-critical)",
 };
 
 export const RISK_LEVEL_LABEL: Record<string, string> = {
@@ -38,8 +41,8 @@ export const RISK_LEVEL_LABEL: Record<string, string> = {
 };
 
 export const RISK_LEVEL_COLOR: Record<string, string> = {
-  low: "#22c55e",
-  moderate: "#eab308",
-  high: "#ef4444",
-  very_high: "#7f1d1d",
+  low: "var(--status-good)",
+  moderate: "var(--status-warning)",
+  high: "var(--status-serious)",
+  very_high: "var(--status-critical)",
 };

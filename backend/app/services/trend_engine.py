@@ -12,7 +12,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.db_models import AqiReading
-from app.models.schemas import TrendResponse
+from app.models.schemas import TrendReading, TrendResponse
 
 _STEADY_THRESHOLD_AQI_PER_HOUR = 3.0
 
@@ -33,8 +33,12 @@ def compute_trend(db: Session, lat_bucket: float, lon_bucket: float) -> TrendRes
         .all()
     )
 
+    readings = [TrendReading(recorded_at=r.recorded_at, aqi=r.aqi) for r in rows]
+
     if len(rows) < 2:
-        return TrendResponse(direction="steady", basis="Not enough recent readings yet to estimate a trend.")
+        return TrendResponse(
+            direction="steady", basis="Not enough recent readings yet to estimate a trend.", readings=readings
+        )
 
     t0 = rows[0].recorded_at
     xs = [(r.recorded_at - t0).total_seconds() / 3600 for r in rows]
@@ -56,4 +60,5 @@ def compute_trend(db: Session, lat_bucket: float, lon_bucket: float) -> TrendRes
     return TrendResponse(
         direction=direction,
         basis=f"AQI changing ~{slope:+.1f}/hr over the last {n} readings ({xs[-1]:.1f}h window).",
+        readings=readings,
     )

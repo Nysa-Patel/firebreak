@@ -58,8 +58,14 @@ export interface CleanAirLocationOut {
   distance_km: number | null;
 }
 
+export interface TrendReading {
+  recorded_at: string;
+  aqi: number;
+}
+
 export interface TrendResponse {
   direction: "improving" | "steady" | "worsening";
   basis: string;
+  readings: TrendReading[];
   disclaimer: string;
 }

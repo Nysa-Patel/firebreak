@@ -76,9 +76,15 @@ class CleanAirLocationOut(BaseModel):
         from_attributes = True
 
 
+class TrendReading(BaseModel):
+    recorded_at: dt.datetime
+    aqi: int
+
+
 class TrendResponse(BaseModel):
     direction: Literal["improving", "steady", "worsening"]
     basis: str
+    readings: list[TrendReading] = []
     disclaimer: str = (
         "Lightweight trend extrapolation from recent AQI readings -- not a "
         "predictive atmospheric forecast."
