@@ -84,3 +84,22 @@ export interface TrendResponse {
   method: string;
   disclaimer: string;
 }
+
+export type SymptomSeverity = "none" | "mild" | "moderate" | "severe";
+
+export interface SymptomLogOut {
+  id: number;
+  logged_at: string;
+  severity: SymptomSeverity;
+  aqi: number;
+}
+
+export interface PersonalThresholdResponse {
+  has_enough_data: boolean;
+  logs_count: number;
+  min_required: number;
+  threshold_aqi: number | null;
+  confidence: "low" | "moderate" | "high";
+  method: string;
+  message: string;
+}

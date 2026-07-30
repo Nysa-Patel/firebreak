@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.database import Base, engine, run_migrations
-from app.routers import aqi, classify, clean_air, risk, submissions, trend
+from app.routers import aqi, classify, clean_air, risk, submissions, symptom_log, trend
 from scripts.seed_db import seed_clean_air_locations
 
 Base.metadata.create_all(bind=engine)
@@ -35,6 +35,7 @@ app.include_router(risk.router)
 app.include_router(submissions.router)
 app.include_router(clean_air.router)
 app.include_router(trend.router)
+app.include_router(symptom_log.router)
 
 
 @app.get("/health")

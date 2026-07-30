@@ -2,10 +2,13 @@ import type {
   AqiResponse,
   CleanAirLocationOut,
   ClassifySmokeResponse,
+  PersonalThresholdResponse,
   RiskProfile,
   RiskScoreResponse,
   SubmissionDetailOut,
   SubmissionOut,
+  SymptomLogOut,
+  SymptomSeverity,
   TrendResponse,
   DensityClass,
   AqiCategory,
@@ -123,6 +126,22 @@ export function getCleanAirLocations(
 
 export function getTrend(lat: number, lon: number, hours = 6): Promise<TrendResponse> {
   return apiFetch(`/api/trend?lat=${lat}&lon=${lon}&hours=${hours}`);
+}
+
+export function logSymptom(deviceId: string, severity: SymptomSeverity, aqi: number): Promise<SymptomLogOut> {
+  return apiFetch("/api/symptom-logs", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ device_id: deviceId, severity, aqi }),
+  });
+}
+
+export function getSymptomLogs(deviceId: string): Promise<SymptomLogOut[]> {
+  return apiFetch(`/api/symptom-logs?device_id=${deviceId}`);
+}
+
+export function getPersonalThreshold(deviceId: string): Promise<PersonalThresholdResponse> {
+  return apiFetch(`/api/personal-threshold?device_id=${deviceId}`);
 }
 
 /** Fire a lightweight request immediately on page load to start waking a

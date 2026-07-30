@@ -45,6 +45,23 @@ class AqiReading(Base):
     recorded_at: Mapped[dt.datetime] = mapped_column(DateTime, default=dt.datetime.utcnow, index=True)
 
 
+class SymptomLog(Base):
+    """One self-reported symptom check-in, tied to a device only (no account)
+    via a random anonymous ID generated and stored client-side. The AQI at
+    the time of logging travels with it so app.services.personal_model can
+    later fit a per-device logistic regression (symptomatic ~ aqi) -- this
+    table is never linked to real identity, just the anonymous device id.
+    """
+
+    __tablename__ = "symptom_logs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    device_id: Mapped[str] = mapped_column(String(64), index=True)
+    severity: Mapped[str] = mapped_column(String(16))
+    aqi: Mapped[int] = mapped_column(Integer)
+    logged_at: Mapped[dt.datetime] = mapped_column(DateTime, default=dt.datetime.utcnow, index=True)
+
+
 class CleanAirLocation(Base):
     """Seeded dataset of indoor spaces with filtered air (libraries, community
     centers, etc.) for the demo region. Framed in the write-up as a stub for a

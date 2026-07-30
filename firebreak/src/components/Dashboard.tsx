@@ -15,6 +15,7 @@ import { RecommendationCard } from "@/components/RecommendationCard";
 import { CleanAirLocations } from "@/components/CleanAirLocations";
 import { TrendSparkline } from "@/components/TrendSparkline";
 import { PersonaToggle } from "@/components/PersonaToggle";
+import { SymptomLogger } from "@/components/SymptomLogger";
 
 export function Dashboard({ initial }: { initial: InitialDashboardData }) {
   const { lat, lon, error: geoError } = useGeolocation();
@@ -83,6 +84,8 @@ export function Dashboard({ initial }: { initial: InitialDashboardData }) {
           <PersonaToggle activeKey={personaKey} onSelect={setPersonaKey} />
 
           <RecommendationCard result={riskResult} />
+
+          <SymptomLogger aqi={aqi?.aqi ?? null} />
 
           <div className="grid sm:grid-cols-2 gap-5">
             <AqiGauge aqi={aqi} status={aqiStatus} />

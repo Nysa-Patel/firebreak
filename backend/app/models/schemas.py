@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 
 DensityClass = Literal["clear", "hazy", "heavy"]
 AqiCategory = Literal["good", "moderate", "unhealthy_sensitive", "unhealthy", "very_unhealthy", "hazardous"]
+SymptomSeverity = Literal["none", "mild", "moderate", "severe"]
 
 
 class AqiResponse(BaseModel):
@@ -104,3 +105,29 @@ class TrendResponse(BaseModel):
         "Short-term statistical extrapolation from recent AQI readings (Holt's "
         "linear smoothing) -- not a predictive atmospheric forecast."
     )
+
+
+class SymptomLogCreate(BaseModel):
+    device_id: str = Field(min_length=8, max_length=64)
+    severity: SymptomSeverity
+    aqi: int = Field(ge=0, le=500)
+
+
+class SymptomLogOut(BaseModel):
+    id: int
+    logged_at: dt.datetime
+    severity: SymptomSeverity
+    aqi: int
+
+    class Config:
+        from_attributes = True
+
+
+class PersonalThresholdResponse(BaseModel):
+    has_enough_data: bool
+    logs_count: int
+    min_required: int
+    threshold_aqi: Optional[float] = None
+    confidence: Literal["low", "moderate", "high"] = "low"
+    method: str = "logistic_regression_per_device"
+    message: str
