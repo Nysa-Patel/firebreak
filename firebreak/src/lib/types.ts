@@ -21,6 +21,8 @@ export interface ClassifySmokeResponse {
   density_class: DensityClass;
   confidence: number;
   model_source: "onnx_model" | "unavailable_stub";
+  heatmap_overlay_base64: string | null;
+  explanation: string | null;
 }
 
 export interface RiskProfile {
@@ -69,9 +71,16 @@ export interface TrendReading {
   aqi: number;
 }
 
+export interface ForecastPoint {
+  hours_ahead: number;
+  aqi: number;
+}
+
 export interface TrendResponse {
   direction: "improving" | "steady" | "worsening";
   basis: string;
   readings: TrendReading[];
+  forecast: ForecastPoint[];
+  method: string;
   disclaimer: string;
 }

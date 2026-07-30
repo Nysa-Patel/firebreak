@@ -19,6 +19,7 @@ export function PhotoClassifier({ lat, lon, onClassified }: Props) {
   const [result, setResult] = useState<ClassifySmokeResponse | null>(null);
   const [status, setStatus] = useState<"idle" | "classifying" | "submitting" | "submitted" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [showHeatmap, setShowHeatmap] = useState(false);
 
   useEffect(() => {
     if (!file) return;
@@ -30,6 +31,7 @@ export function PhotoClassifier({ lat, lon, onClassified }: Props) {
   async function handleFile(selected: File) {
     setFile(selected);
     setResult(null);
+    setShowHeatmap(false);
     setStatus("classifying");
     setErrorMessage(null);
     try {
@@ -72,8 +74,12 @@ export function PhotoClassifier({ lat, lon, onClassified }: Props) {
           style={{ width: 84, height: 84, background: "var(--surface-2)", border: "1px dashed var(--border)" }}
         >
           {previewUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element -- local object URL, not a remote asset worth next/image's optimization
-            <img src={previewUrl} alt="Uploaded sky photo preview" className="w-full h-full object-cover" />
+            // eslint-disable-next-line @next/next/no-img-element -- local object URL / base64 data URI, not a remote asset worth next/image's optimization
+            <img
+              src={showHeatmap && result?.heatmap_overlay_base64 ? `data:image/png;base64,${result.heatmap_overlay_base64}` : previewUrl}
+              alt={showHeatmap ? "Heatmap of sky regions that drove the classification" : "Uploaded sky photo preview"}
+              className="w-full h-full object-cover"
+            />
           ) : (
             <span className="text-xs text-center px-1" style={{ color: "var(--text-muted)" }}>
               Upload
@@ -127,6 +133,37 @@ export function PhotoClassifier({ lat, lon, onClassified }: Props) {
         <p className="text-xs mt-3" style={{ color: "var(--status-warning)" }}>
           Trained CV model not deployed yet -- this is a placeholder heuristic estimate.
         </p>
+      )}
+
+      {result?.heatmap_overlay_base64 && (
+        <div className="mt-4 pt-4" style={{ borderTop: "1px solid var(--border)" }}>
+          <button
+            onClick={() => setShowHeatmap((v) => !v)}
+            className="text-sm font-medium rounded-full px-4 py-2"
+            style={{ background: "var(--surface-2)", color: "var(--text-primary)" }}
+          >
+            {showHeatmap ? "Hide" : "Show"} what the model saw
+          </button>
+          {showHeatmap && (
+            <>
+              <div
+                className="mt-3 rounded-lg overflow-hidden"
+                style={{ maxWidth: 320, border: "1px solid var(--border)" }}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element -- base64 data URI, not a remote asset */}
+                <img
+                  src={`data:image/png;base64,${result.heatmap_overlay_base64}`}
+                  alt="Class activation heatmap over the sky photo"
+                  className="w-full h-auto block"
+                />
+              </div>
+              <p className="text-xs mt-2 max-w-[320px]" style={{ color: "var(--text-muted)" }}>
+                {result.explanation} Warmer colors mark the pixels the model weighted most heavily
+                for this classification (Class Activation Mapping).
+              </p>
+            </>
+          )}
+        </div>
       )}
 
       {result && lat != null && lon != null && status !== "submitted" && (

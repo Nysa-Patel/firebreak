@@ -20,6 +20,8 @@ class ClassifySmokeResponse(BaseModel):
     density_class: DensityClass
     confidence: float = Field(ge=0, le=1)
     model_source: Literal["onnx_model", "unavailable_stub"]
+    heatmap_overlay_base64: Optional[str] = None
+    explanation: Optional[str] = None
 
 
 class RiskProfile(BaseModel):
@@ -87,11 +89,18 @@ class TrendReading(BaseModel):
     aqi: int
 
 
+class ForecastPoint(BaseModel):
+    hours_ahead: int
+    aqi: float
+
+
 class TrendResponse(BaseModel):
     direction: Literal["improving", "steady", "worsening"]
     basis: str
     readings: list[TrendReading] = []
+    forecast: list[ForecastPoint] = []
+    method: str = "holt_linear_smoothing"
     disclaimer: str = (
-        "Lightweight trend extrapolation from recent AQI readings -- not a "
-        "predictive atmospheric forecast."
+        "Short-term statistical extrapolation from recent AQI readings (Holt's "
+        "linear smoothing) -- not a predictive atmospheric forecast."
     )

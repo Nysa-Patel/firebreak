@@ -37,14 +37,16 @@ export default function TrendsPage() {
   const values = trend?.readings.map((r) => r.aqi) ?? [];
   const min = values.length ? Math.min(...values) : null;
   const max = values.length ? Math.max(...values) : null;
+  const projectedIn3h = trend?.forecast.find((f) => f.hours_ahead === 3)?.aqi ?? null;
 
   return (
     <main className="max-w-5xl mx-auto w-full px-4 py-8 space-y-5">
       <header className="space-y-1">
         <h1 className="text-2xl font-bold">AQI trend</h1>
         <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-          A lightweight trend extrapolated from AQI readings this app has logged for your area over
-          time -- not a predictive atmospheric forecast, just recent history plus a simple slope.
+          Projected from AQI readings this app has logged for your area using Holt&apos;s linear
+          smoothing (a standard time-series forecasting technique) -- a real short-term statistical
+          forecast, not a predictive atmospheric model.
         </p>
       </header>
 
@@ -69,7 +71,7 @@ export default function TrendsPage() {
         {loading ? (
           <div className="h-[220px] animate-pulse" style={{ background: "var(--surface-2)", borderRadius: 8 }} />
         ) : trend ? (
-          <TrendChart readings={trend.readings} windowHours={windowHours} />
+          <TrendChart readings={trend.readings} forecast={trend.forecast} windowHours={windowHours} />
         ) : (
           <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
             Couldn&apos;t load trend data right now.
@@ -79,7 +81,7 @@ export default function TrendsPage() {
 
       {trend && (
         <>
-          <div className="grid sm:grid-cols-3 gap-4">
+          <div className="grid sm:grid-cols-4 gap-4">
             <StatTile
               label="Direction"
               value={`${DIRECTION_ARROW[trend.direction]} ${trend.direction}`}
@@ -87,6 +89,11 @@ export default function TrendsPage() {
             />
             <StatTile label="Lowest AQI" value={min != null ? String(min) : "--"} sub={`last ${windowHours}h`} />
             <StatTile label="Highest AQI" value={max != null ? String(max) : "--"} sub={`last ${windowHours}h`} />
+            <StatTile
+              label="Projected"
+              value={projectedIn3h != null ? String(Math.round(projectedIn3h)) : "--"}
+              sub="in 3h (forecast)"
+            />
           </div>
 
           <div className="card p-5">

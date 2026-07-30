@@ -39,6 +39,7 @@ export function TrendSparkline({ trend }: { trend: TrendResponse | null }) {
 
   const values = (trend.readings ?? []).map((r) => r.aqi);
   const hasSeries = values.length >= 2;
+  const projectedIn3h = trend.forecast?.find((f) => f.hours_ahead === 3)?.aqi ?? null;
 
   return (
     <div className="card p-5">
@@ -48,6 +49,11 @@ export function TrendSparkline({ trend }: { trend: TrendResponse | null }) {
           {ARROW[trend.direction]}
         </span>
         <span className="text-lg font-medium capitalize">{trend.direction}</span>
+        {projectedIn3h != null && (
+          <span className="text-sm" style={{ color: "var(--text-muted)" }}>
+            -- {Math.round(projectedIn3h)} AQI in 3h (projected)
+          </span>
+        )}
       </div>
 
       {hasSeries && (

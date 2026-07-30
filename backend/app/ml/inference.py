@@ -6,6 +6,14 @@ exported (see ml_pipeline/README.md), classify_smoke() falls back to a
 simple, clearly-labeled image-statistics heuristic so the endpoint is never
 silently wrong about what produced its answer -- model_source in the response
 always says which path was used.
+
+The ONNX export (ml_pipeline/export_onnx.py) also emits the pre-pool feature
+map as a second output. Because the trained head is a plain global-average-
+pool followed by a single Linear layer, that feature map is enough to compute
+a real Class Activation Map (Zhou et al. 2016) for the predicted class --
+no gradients and no separate explainability model needed, just a weighted
+sum of feature-map channels using that class's row of the Linear layer's
+weight matrix (loaded from the small .npz dumped alongside the ONNX file).
 """
 
 import base64
@@ -18,14 +26,41 @@ from PIL import Image
 from app.models.schemas import ClassifySmokeResponse
 
 _LABELS = ["clear", "hazy", "heavy"]
-_MODEL_PATH = Path(__file__).resolve().parent.parent.parent / "ml_pipeline" / "model" / "smoke_density.onnx"
+_MODEL_DIR = Path(__file__).resolve().parent.parent.parent / "ml_pipeline" / "model"
+_MODEL_PATH = _MODEL_DIR / "smoke_density.onnx"
+_HEAD_WEIGHTS_PATH = _MODEL_DIR / "smoke_density_head.npz"
 _INPUT_SIZE = 224
 
+_EXPLANATION = {
+    "clear": "Highlighted regions influenced the 'clear' call most -- consistent sky "
+    "color and contrast throughout, with no localized haze the model weighted heavily.",
+    "hazy": "Highlighted regions show where the model found the color desaturation and "
+    "contrast loss typical of light smoke haze.",
+    "heavy": "Highlighted regions show where the model found the strong desaturation "
+    "and flattened contrast typical of heavy smoke.",
+}
+
+# Grad-CAM-style colormap control points (low -> high activation), each an
+# (R, G, B) tuple -- linearly interpolated between. Alpha scales with
+# activation too, so low-activation areas stay nearly transparent.
+_COLORMAP_STOPS = [
+    (0.0, (0, 0, 255)),
+    (0.33, (0, 255, 255)),
+    (0.66, (255, 255, 0)),
+    (1.0, (255, 0, 0)),
+]
+_MAX_OVERLAY_ALPHA = 165
+
 _session = None
-if _MODEL_PATH.exists():
+_head_weight = None
+_head_bias = None
+if _MODEL_PATH.exists() and _HEAD_WEIGHTS_PATH.exists():
     import onnxruntime as ort
 
     _session = ort.InferenceSession(str(_MODEL_PATH))
+    _head = np.load(_HEAD_WEIGHTS_PATH)
+    _head_weight = _head["weight"]  # [num_classes, 1280]
+    _head_bias = _head["bias"]  # [num_classes]
 
 
 def _preprocess(image: Image.Image) -> np.ndarray:
@@ -33,6 +68,44 @@ def _preprocess(image: Image.Image) -> np.ndarray:
     array = np.asarray(image, dtype=np.float32) / 127.5 - 1.0  # MobileNetV2 preprocessing
     array = np.transpose(array, (2, 0, 1))  # HWC -> CHW
     return np.expand_dims(array, axis=0)
+
+
+def _colormap(intensity: np.ndarray) -> np.ndarray:
+    """Maps a [H, W] array of 0..1 activations to an [H, W, 4] RGBA uint8 array."""
+    h, w = intensity.shape
+    rgb = np.zeros((h, w, 3), dtype=np.float32)
+    for (lo, lo_color), (hi, hi_color) in zip(_COLORMAP_STOPS, _COLORMAP_STOPS[1:]):
+        mask = (intensity >= lo) & (intensity <= hi)
+        span = hi - lo or 1.0
+        t = np.clip((intensity[mask] - lo) / span, 0, 1)
+        for c in range(3):
+            rgb[mask, c] = lo_color[c] + t * (hi_color[c] - lo_color[c])
+
+    alpha = (intensity * _MAX_OVERLAY_ALPHA).astype(np.uint8)
+    return np.dstack([rgb.astype(np.uint8), alpha])
+
+
+def _compute_cam_overlay(feature_map: np.ndarray, class_idx: int, base_image: Image.Image) -> str:
+    """feature_map: [1280, 7, 7] for the predicted class. Returns a base64 PNG
+    of base_image (resized to model input size) with the CAM heatmap alpha-blended on top."""
+    weights = _head_weight[class_idx]  # [1280]
+    cam = np.tensordot(weights, feature_map, axes=([0], [0]))  # [7, 7]
+    cam = np.maximum(cam, 0)  # ReLU -- only positive evidence for this class
+    peak = cam.max()
+    cam = cam / peak if peak > 0 else cam
+
+    cam_img = Image.fromarray((cam * 255).astype(np.uint8)).resize(
+        (_INPUT_SIZE, _INPUT_SIZE), Image.BILINEAR
+    )
+    cam_upsampled = np.asarray(cam_img, dtype=np.float32) / 255.0
+
+    overlay = Image.fromarray(_colormap(cam_upsampled), mode="RGBA")
+    base = base_image.convert("RGB").resize((_INPUT_SIZE, _INPUT_SIZE)).convert("RGBA")
+    combined = Image.alpha_composite(base, overlay)
+
+    buffer = io.BytesIO()
+    combined.convert("RGB").save(buffer, format="PNG")
+    return base64.b64encode(buffer.getvalue()).decode("ascii")
 
 
 def _heuristic_fallback(image: Image.Image) -> ClassifySmokeResponse:
@@ -68,14 +141,22 @@ def classify_smoke_bytes(raw: bytes) -> ClassifySmokeResponse:
 
     input_array = _preprocess(image)
     input_name = _session.get_inputs()[0].name
-    logits = _session.run(None, {input_name: input_array})[0][0]
+    logits, feature_map = _session.run(["logits", "feature_map"], {input_name: input_array})
+    logits = logits[0]
+    feature_map = feature_map[0]  # [1280, 7, 7]
+
     probs = np.exp(logits) / np.sum(np.exp(logits))
     idx = int(np.argmax(probs))
+    density_class = _LABELS[idx]
+
+    heatmap_overlay_base64 = _compute_cam_overlay(feature_map, idx, image)
 
     return ClassifySmokeResponse(
-        density_class=_LABELS[idx],
+        density_class=density_class,
         confidence=float(probs[idx]),
         model_source="onnx_model",
+        heatmap_overlay_base64=heatmap_overlay_base64,
+        explanation=_EXPLANATION[density_class],
     )
 
 

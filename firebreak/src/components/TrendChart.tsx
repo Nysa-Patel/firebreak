@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { TrendReading } from "@/lib/types";
+import type { ForecastPoint, TrendReading } from "@/lib/types";
 import { AQI_CATEGORY_COLOR } from "@/lib/display";
 import { aqiToCategory } from "@/lib/aqiCategory";
 
@@ -21,7 +21,15 @@ function niceMax(value: number): number {
   return Math.ceil(value / 100) * 100;
 }
 
-export function TrendChart({ readings, windowHours }: { readings: TrendReading[]; windowHours: number }) {
+export function TrendChart({
+  readings,
+  forecast = [],
+  windowHours,
+}: {
+  readings: TrendReading[];
+  forecast?: ForecastPoint[];
+  windowHours: number;
+}) {
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
 
   const plot = useMemo(() => {
@@ -30,26 +38,38 @@ export function TrendChart({ readings, windowHours }: { readings: TrendReading[]
     const times = readings.map((r) => new Date(r.recorded_at).getTime());
     const values = readings.map((r) => r.aqi);
     const t0 = times[0];
-    const t1 = times[times.length - 1];
+    const lastActualTime = times[times.length - 1];
+    const forecastTimes = forecast.map((f) => lastActualTime + f.hours_ahead * 3_600_000);
+    const t1 = forecastTimes.length ? forecastTimes[forecastTimes.length - 1] : lastActualTime;
     const tRange = t1 - t0 || 1;
-    const yMax = niceMax(Math.max(...values, 50));
+    const yMax = niceMax(Math.max(...values, ...forecast.map((f) => f.aqi), 50));
 
     const plotWidth = WIDTH - PAD_LEFT - PAD_RIGHT;
     const plotHeight = HEIGHT - PAD_TOP - PAD_BOTTOM;
 
-    const points = readings.map((r, i) => {
-      const x = PAD_LEFT + ((times[i] - t0) / tRange) * plotWidth;
-      const y = PAD_TOP + plotHeight - (r.aqi / yMax) * plotHeight;
-      return { x, y, aqi: r.aqi, time: times[i] };
+    const toXY = (time: number, aqi: number) => ({
+      x: PAD_LEFT + ((time - t0) / tRange) * plotWidth,
+      y: PAD_TOP + plotHeight - (aqi / yMax) * plotHeight,
     });
 
+    const points = readings.map((r, i) => ({ ...toXY(times[i], r.aqi), aqi: r.aqi, time: times[i] }));
     const line = points.map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
 
-    const yTicks = [0, yMax / 2, yMax];
-    const xTicks = [t0, (t0 + t1) / 2, t1];
+    const lastPoint = points[points.length - 1];
+    const forecastPoints = forecast.map((f, i) => ({
+      ...toXY(forecastTimes[i], f.aqi),
+      aqi: f.aqi,
+      hoursAhead: f.hours_ahead,
+    }));
+    const forecastLine = forecastPoints.length
+      ? [lastPoint, ...forecastPoints].map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ")
+      : null;
 
-    return { points, line, yMax, yTicks, xTicks, plotWidth, plotHeight };
-  }, [readings]);
+    const yTicks = [0, yMax / 2, yMax];
+    const xTicks = [t0, (t0 + lastActualTime) / 2, lastActualTime];
+
+    return { points, line, forecastPoints, forecastLine, yMax, yTicks, xTicks, plotWidth, plotHeight };
+  }, [readings, forecast]);
 
   if (!plot) {
     return (
@@ -60,7 +80,7 @@ export function TrendChart({ readings, windowHours }: { readings: TrendReading[]
     );
   }
 
-  const { points, line, yTicks, xTicks, plotHeight } = plot;
+  const { points, line, forecastPoints, forecastLine, yTicks, xTicks, plotHeight } = plot;
   const hovered = hoverIndex != null ? points[hoverIndex] : null;
 
   function handleMouseMove(e: React.MouseEvent<SVGRectElement>) {
@@ -84,7 +104,7 @@ export function TrendChart({ readings, windowHours }: { readings: TrendReading[]
       width="100%"
       style={{ maxWidth: WIDTH }}
       role="img"
-      aria-label={`AQI trend over the last ${windowHours} hours`}
+      aria-label={`AQI trend over the last ${windowHours} hours, with a short-term forecast`}
     >
       {yTicks.map((t) => {
         const y = PAD_TOP + plotHeight - (t / plot.yMax) * plotHeight;
@@ -109,6 +129,38 @@ export function TrendChart({ readings, windowHours }: { readings: TrendReading[]
       })}
 
       <path d={line} fill="none" stroke="var(--accent)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+
+      {forecastLine && (
+        <path
+          d={forecastLine}
+          fill="none"
+          stroke="var(--accent)"
+          strokeWidth={2}
+          strokeDasharray="5,4"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          opacity={0.6}
+        />
+      )}
+
+      {forecastPoints.map((p) => (
+        <circle
+          key={p.hoursAhead}
+          cx={p.x}
+          cy={p.y}
+          r={3.5}
+          fill="var(--surface-1)"
+          stroke="var(--accent)"
+          strokeWidth={2}
+          opacity={0.85}
+        />
+      ))}
+
+      {forecastPoints.length > 0 && (
+        <text x={WIDTH - PAD_RIGHT} y={PAD_TOP + 10} textAnchor="end" fontSize={10} fill="var(--text-muted)">
+          - - projected (Holt&apos;s smoothing)
+        </text>
+      )}
 
       {hovered && (
         <>
