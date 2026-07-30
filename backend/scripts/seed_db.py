@@ -1,9 +1,12 @@
 """Seed seed_data/clean_air_locations.json into the DB.
 
-Idempotent (skips if already seeded), so app.main also calls this at startup
--- Render's free tier has no convenient one-off shell for a Postgres
-instance, so the app seeding itself on boot means a fresh Postgres database
-doesn't require manual intervention after deploy.
+Idempotent (no-ops if the row count already matches the seed file), so
+app.main also calls this at startup -- Render's free tier has no convenient
+one-off shell for a Postgres instance, so the app seeding itself on boot
+means a fresh Postgres database doesn't require manual intervention after
+deploy. Re-syncs (clears + reinserts) when the seed file has changed size --
+this table is pure reference data, not user-generated, so replacing it
+wholesale on a seed-file update is safe.
 
 Run standalone with: python -m scripts.seed_db
 """
@@ -21,15 +24,17 @@ def seed_clean_air_locations() -> None:
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
     try:
-        if db.query(CleanAirLocation).count() > 0:
-            print("clean_air_locations already seeded, skipping.")
+        entries = json.loads(_SEED_FILE.read_text())
+        current_count = db.query(CleanAirLocation).count()
+        if current_count == len(entries):
+            print(f"clean_air_locations already in sync ({current_count} rows), skipping.")
             return
 
-        entries = json.loads(_SEED_FILE.read_text())
+        db.query(CleanAirLocation).delete()
         for entry in entries:
             db.add(CleanAirLocation(**entry))
         db.commit()
-        print(f"Seeded {len(entries)} clean-air locations.")
+        print(f"Re-synced clean_air_locations: {current_count} -> {len(entries)} rows.")
     finally:
         db.close()
 
