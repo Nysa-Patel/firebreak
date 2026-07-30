@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { DEMO_REGION as FALLBACK } from "./demoRegion";
 
 interface GeoState {
   lat: number | null;
@@ -8,10 +9,6 @@ interface GeoState {
   error: string | null;
   loading: boolean;
 }
-
-// Default fallback: Chico, CA (demo region) -- used when geolocation is
-// denied or unavailable so the app is still usable, not blocked.
-const FALLBACK = { lat: 39.7285, lon: -121.8375 };
 
 export function useGeolocation() {
   const [state, setState] = useState<GeoState>({ lat: null, lon: null, error: null, loading: true });
