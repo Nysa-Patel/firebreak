@@ -5,8 +5,15 @@ import { DENSITY_COLOR, DENSITY_LABEL } from "@/lib/display";
 import { DENSITY_ICON } from "@/components/icons";
 import { SectionLabel } from "@/components/AqiGauge";
 import { timeAgo } from "@/lib/timeAgo";
+import { haversineMiles } from "@/lib/distance";
 
-export function RecentSubmissions({ submissions }: { submissions: SubmissionOut[] }) {
+interface Props {
+  submissions: SubmissionOut[];
+  viewerLat?: number | null;
+  viewerLon?: number | null;
+}
+
+export function RecentSubmissions({ submissions, viewerLat, viewerLon }: Props) {
   if (submissions.length === 0) {
     return (
       <div className="card p-5">
@@ -26,6 +33,10 @@ export function RecentSubmissions({ submissions }: { submissions: SubmissionOut[
         {submissions.map((s) => {
           const Icon = DENSITY_ICON[s.density_class];
           const color = DENSITY_COLOR[s.density_class];
+          const distance =
+            viewerLat != null && viewerLon != null
+              ? haversineMiles(viewerLat, viewerLon, s.fuzzed_lat, s.fuzzed_lon)
+              : null;
           return (
             <li key={s.id} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0" style={{ borderColor: "var(--gridline)" }}>
               <span
@@ -37,7 +48,8 @@ export function RecentSubmissions({ submissions }: { submissions: SubmissionOut[
               <div className="min-w-0 flex-1">
                 <p className="font-medium">{DENSITY_LABEL[s.density_class]}</p>
                 <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                  geohash {s.geohash} -- {timeAgo(s.created_at)}
+                  {timeAgo(s.created_at)}
+                  {distance != null && ` -- ${distance.toFixed(1)} mi away`}
                 </p>
               </div>
               <span className="text-xs shrink-0 font-medium" style={{ color: "var(--text-secondary)" }}>

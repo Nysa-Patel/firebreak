@@ -17,8 +17,8 @@ from app.models.schemas import TrendReading, TrendResponse
 _STEADY_THRESHOLD_AQI_PER_HOUR = 3.0
 
 
-def compute_trend(db: Session, lat_bucket: float, lon_bucket: float) -> TrendResponse:
-    cutoff = dt.datetime.utcnow() - dt.timedelta(hours=6)
+def compute_trend(db: Session, lat_bucket: float, lon_bucket: float, hours: int = 6) -> TrendResponse:
+    cutoff = dt.datetime.utcnow() - dt.timedelta(hours=hours)
     rows = (
         db.execute(
             select(AqiReading)

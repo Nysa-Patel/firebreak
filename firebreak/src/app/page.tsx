@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { getAqi, getCleanAirLocations, getTrend, pingBackend, scoreRisk } from "@/lib/api";
 import { useGeolocation } from "@/lib/useGeolocation";
 import { useRiskProfile } from "@/lib/useRiskProfile";
+import { PERSONAS } from "@/lib/personas";
 import type { AqiResponse, CleanAirLocationOut, ClassifySmokeResponse, RiskScoreResponse, TrendResponse } from "@/lib/types";
 import { RiskProfileForm } from "@/components/RiskProfileForm";
 import { AqiGauge } from "@/components/AqiGauge";
@@ -11,6 +12,7 @@ import { PhotoClassifier } from "@/components/PhotoClassifier";
 import { RecommendationCard } from "@/components/RecommendationCard";
 import { CleanAirLocations } from "@/components/CleanAirLocations";
 import { TrendSparkline } from "@/components/TrendSparkline";
+import { PersonaToggle } from "@/components/PersonaToggle";
 
 export default function Home() {
   const { lat, lon, error: geoError } = useGeolocation();
@@ -22,6 +24,9 @@ export default function Home() {
   const [riskResult, setRiskResult] = useState<RiskScoreResponse | null>(null);
   const [locations, setLocations] = useState<CleanAirLocationOut[]>([]);
   const [trend, setTrend] = useState<TrendResponse | null>(null);
+  const [personaKey, setPersonaKey] = useState<string | null>(null);
+
+  const effectiveProfile = personaKey ? PERSONAS.find((p) => p.key === personaKey)!.profile : profile;
 
   useEffect(() => {
     // Kick the backend awake immediately (Render's free tier sleeps after
@@ -47,10 +52,10 @@ export default function Home() {
 
   useEffect(() => {
     if (!aqi || !profileLoaded) return;
-    scoreRisk(profile, aqi.category, smokeResult?.density_class)
+    scoreRisk(effectiveProfile, aqi.category, smokeResult?.density_class)
       .then(setRiskResult)
       .catch(() => setRiskResult(null));
-  }, [aqi, profile, profileLoaded, smokeResult]);
+  }, [aqi, effectiveProfile, profileLoaded, smokeResult]);
 
   return (
     <main className="max-w-5xl mx-auto w-full px-4 py-8">
@@ -62,6 +67,8 @@ export default function Home() {
 
       <div className="grid lg:grid-cols-[1fr_340px] gap-5 items-start">
         <div className="space-y-5 min-w-0">
+          <PersonaToggle activeKey={personaKey} onSelect={setPersonaKey} />
+
           <RecommendationCard result={riskResult} />
 
           <div className="grid sm:grid-cols-2 gap-5">
@@ -73,7 +80,7 @@ export default function Home() {
         </div>
 
         <div className="space-y-5 min-w-0">
-          <RiskProfileForm profile={profile} onChange={setProfile} />
+          <RiskProfileForm profile={profile} onChange={setProfile} disabled={personaKey != null} />
           <CleanAirLocations locations={locations} />
         </div>
       </div>

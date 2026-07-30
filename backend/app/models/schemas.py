@@ -62,6 +62,12 @@ class SubmissionOut(BaseModel):
         from_attributes = True
 
 
+class SubmissionDetailOut(SubmissionOut):
+    client_captured_at: dt.datetime
+    photo_base64: Optional[str] = None
+    photo_available: bool = False
+
+
 class CleanAirLocationOut(BaseModel):
     id: int
     name: str

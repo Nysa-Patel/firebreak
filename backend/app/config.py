@@ -29,5 +29,10 @@ class Settings(BaseSettings):
     duplicate_window_minutes: int = 30
     submission_max_age_minutes: int = 60
 
+    # How long a submission's raw photo stays fetchable via the detail
+    # endpoint (pin click) before being purged -- the classification/trust
+    # score/timestamp stay on the row indefinitely, just not the image.
+    photo_retention_hours: int = 48
+
 
 settings = Settings()

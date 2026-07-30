@@ -47,6 +47,12 @@ export interface SubmissionOut {
   created_at: string;
 }
 
+export interface SubmissionDetailOut extends SubmissionOut {
+  client_captured_at: string;
+  photo_base64: string | null;
+  photo_available: boolean;
+}
+
 export interface CleanAirLocationOut {
   id: number;
   name: string;

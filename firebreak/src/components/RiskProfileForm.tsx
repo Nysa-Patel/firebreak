@@ -6,15 +6,17 @@ import { SectionLabel } from "@/components/AqiGauge";
 interface Props {
   profile: RiskProfile;
   onChange: (profile: RiskProfile) => void;
+  disabled?: boolean;
 }
 
-export function RiskProfileForm({ profile, onChange }: Props) {
+export function RiskProfileForm({ profile, onChange, disabled = false }: Props) {
   return (
-    <div className="card p-5">
+    <div className="card p-5" style={{ opacity: disabled ? 0.5 : 1, transition: "opacity 0.3s ease" }}>
       <SectionLabel>Your risk profile</SectionLabel>
       <p className="text-sm mt-1 mb-4" style={{ color: "var(--text-secondary)" }}>
-        Stored only in this browser -- no account, no server-side profile. Used to personalize the
-        recommendation above.
+        {disabled
+          ? "Disabled while previewing another persona -- your saved profile isn't being edited."
+          : "Stored only in this browser -- no account, no server-side profile. Used to personalize the recommendation above."}
       </p>
 
       <label className="flex items-center justify-between gap-4 py-2.5 text-sm" style={{ borderBottom: "1px solid var(--gridline)" }}>
@@ -24,6 +26,7 @@ export function RiskProfileForm({ profile, onChange }: Props) {
           min={0}
           max={120}
           value={profile.age}
+          disabled={disabled}
           onChange={(e) => onChange({ ...profile, age: Number(e.target.value) })}
           className="w-20 rounded-md px-2 py-1 text-right"
           style={{ border: "1px solid var(--border)", background: "var(--surface-2)" }}
@@ -46,6 +49,7 @@ export function RiskProfileForm({ profile, onChange }: Props) {
           <input
             type="checkbox"
             checked={profile[key]}
+            disabled={disabled}
             onChange={(e) => onChange({ ...profile, [key]: e.target.checked })}
             className="size-4"
             style={{ accentColor: "var(--accent)" }}

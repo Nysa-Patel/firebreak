@@ -4,6 +4,7 @@ import type {
   ClassifySmokeResponse,
   RiskProfile,
   RiskScoreResponse,
+  SubmissionDetailOut,
   SubmissionOut,
   TrendResponse,
   DensityClass,
@@ -108,6 +109,10 @@ export function listSubmissions(sinceHours = 6): Promise<SubmissionOut[]> {
   return apiFetch(`/api/submissions?since_hours=${sinceHours}`);
 }
 
+export function getSubmissionDetail(id: number): Promise<SubmissionDetailOut> {
+  return apiFetch(`/api/submissions/${id}`);
+}
+
 export function getCleanAirLocations(
   lat: number,
   lon: number,
@@ -116,8 +121,8 @@ export function getCleanAirLocations(
   return apiFetch(`/api/clean-air-locations?lat=${lat}&lon=${lon}&radius_km=${radiusKm}`);
 }
 
-export function getTrend(lat: number, lon: number): Promise<TrendResponse> {
-  return apiFetch(`/api/trend?lat=${lat}&lon=${lon}`);
+export function getTrend(lat: number, lon: number, hours = 6): Promise<TrendResponse> {
+  return apiFetch(`/api/trend?lat=${lat}&lon=${lon}&hours=${hours}`);
 }
 
 /** Fire a lightweight request immediately on page load to start waking a

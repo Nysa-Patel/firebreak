@@ -1,4 +1,5 @@
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
+from sqlalchemy.exc import OperationalError, ProgrammingError
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 from app.config import settings
@@ -18,3 +19,24 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+def run_migrations() -> None:
+    """Tiny hand-rolled migrations for columns added after a table already
+    existed in production -- `Base.metadata.create_all()` only creates
+    missing *tables*, never alters existing ones. No Alembic setup for a
+    project this size, so this stays a short, explicit list rather than a
+    real migration framework.
+    """
+    is_sqlite = settings.database_url.startswith("sqlite")
+    with engine.begin() as conn:
+        if is_sqlite:
+            try:
+                conn.execute(text("ALTER TABLE submissions ADD COLUMN photo_base64 TEXT"))
+            except OperationalError:
+                pass  # column already exists -- sqlite has no IF NOT EXISTS for ADD COLUMN
+        else:
+            try:
+                conn.execute(text("ALTER TABLE submissions ADD COLUMN IF NOT EXISTS photo_base64 TEXT"))
+            except ProgrammingError:
+                pass

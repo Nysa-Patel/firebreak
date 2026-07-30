@@ -1,11 +1,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.database import Base, engine
+from app.database import Base, engine, run_migrations
 from app.routers import aqi, classify, clean_air, risk, submissions, trend
 from scripts.seed_db import seed_clean_air_locations
 
 Base.metadata.create_all(bind=engine)
+run_migrations()
 # Idempotent -- safe to call on every boot. Needed because Render's free tier
 # gives no convenient one-off shell against a fresh Postgres instance, so the
 # app seeding itself on startup is what makes a first deploy actually work.

@@ -1,6 +1,6 @@
 import datetime as dt
 
-from sqlalchemy import Float, Integer, String, DateTime
+from sqlalchemy import Float, Integer, String, DateTime, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
@@ -9,9 +9,12 @@ from app.database import Base
 class Submission(Base):
     """A crowd-sourced sky photo reading.
 
-    Only the fuzzed geohash cell is stored, never exact coordinates, and the
-    raw photo is discarded after classification -- only the derived signal
-    (density class, confidence, perceptual hash for dedup) is kept.
+    Only the fuzzed geohash cell is stored, never exact coordinates. The
+    photo itself is kept only for a short window (see
+    app.services.photo_retention) so pin-click detail views can show it --
+    after that window the photo_base64 column is nulled out but the row
+    (classification, trust score, timestamp) stays, since that's the part
+    the map/feed actually displays long-term.
     """
 
     __tablename__ = "submissions"
@@ -25,6 +28,7 @@ class Submission(Base):
     duplicate_flag_count: Mapped[int] = mapped_column(Integer, default=0)
     client_captured_at: Mapped[dt.datetime] = mapped_column(DateTime)
     created_at: Mapped[dt.datetime] = mapped_column(DateTime, default=dt.datetime.utcnow)
+    photo_base64: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 
 class AqiReading(Base):

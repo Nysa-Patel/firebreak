@@ -1,3 +1,4 @@
+import base64
 import datetime as dt
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
@@ -8,11 +9,14 @@ from app.config import settings
 from app.database import get_db
 from app.ml.inference import classify_smoke_bytes
 from app.models.db_models import Submission
-from app.models.schemas import SubmissionOut
+from app.models.schemas import SubmissionDetailOut, SubmissionOut
 from app.services import geohash_utils
 from app.services.phash_utils import compute_phash_bytes, is_near_duplicate
+from app.services.photo_retention import purge_expired_photos
 
 router = APIRouter(prefix="/api", tags=["submissions"])
+
+_MAX_UPLOAD_BYTES = 8 * 1024 * 1024
 
 
 def _to_out(row: Submission) -> SubmissionOut:
@@ -26,6 +30,16 @@ def _to_out(row: Submission) -> SubmissionOut:
         confidence=row.confidence,
         trust_score=row.trust_score,
         created_at=row.created_at,
+    )
+
+
+def _to_detail(row: Submission) -> SubmissionDetailOut:
+    base = _to_out(row)
+    return SubmissionDetailOut(
+        **base.model_dump(),
+        client_captured_at=row.client_captured_at,
+        photo_base64=row.photo_base64,
+        photo_available=row.photo_base64 is not None,
     )
 
 
@@ -51,6 +65,8 @@ async def create_submission(
     raw = await photo.read()
     if not raw:
         raise HTTPException(status_code=400, detail="Empty upload.")
+    if len(raw) > _MAX_UPLOAD_BYTES:
+        raise HTTPException(status_code=413, detail="Photo too large (max 8MB).")
 
     geohash = geohash_utils.encode(lat, lon, settings.submission_geohash_precision)
     phash = compute_phash_bytes(raw)
@@ -85,8 +101,11 @@ async def create_submission(
         phash=phash,
         duplicate_flag_count=duplicate_flag_count,
         client_captured_at=captured_at,
+        # Kept only for settings.photo_retention_hours -- see photo_retention.py.
+        photo_base64=base64.b64encode(raw).decode("ascii"),
     )
     db.add(submission)
+    purge_expired_photos(db)
     db.commit()
     db.refresh(submission)
 
@@ -105,3 +124,12 @@ async def list_submissions(
         .all()
     )
     return [_to_out(r) for r in rows]
+
+
+@router.get("/submissions/{submission_id}", response_model=SubmissionDetailOut)
+async def get_submission(submission_id: int, db: Session = Depends(get_db)) -> SubmissionDetailOut:
+    purge_expired_photos(db)
+    row = db.get(Submission, submission_id)
+    if row is None:
+        raise HTTPException(status_code=404, detail="Submission not found.")
+    return _to_detail(row)

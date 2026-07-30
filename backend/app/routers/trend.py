@@ -14,6 +14,7 @@ _TREND_BUCKET_DECIMALS = 2
 async def trend(
     lat: float = Query(ge=-90, le=90),
     lon: float = Query(ge=-180, le=180),
+    hours: int = Query(default=6, ge=1, le=48),
     db: Session = Depends(get_db),
 ) -> TrendResponse:
-    return compute_trend(db, round(lat, _TREND_BUCKET_DECIMALS), round(lon, _TREND_BUCKET_DECIMALS))
+    return compute_trend(db, round(lat, _TREND_BUCKET_DECIMALS), round(lon, _TREND_BUCKET_DECIMALS), hours=hours)

@@ -91,7 +91,7 @@ export default function MapPage() {
       </div>
 
       <div className="grid lg:grid-cols-2 gap-5 items-start">
-        <RecentSubmissions submissions={submissions} />
+        <RecentSubmissions submissions={submissions} viewerLat={lat} viewerLon={lon} />
         <CleanAirLocations locations={locations} />
       </div>
     </main>

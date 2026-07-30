@@ -16,6 +16,7 @@ function FlameIcon() {
 
 const NAV_LINKS = [
   { href: "/", label: "Your risk" },
+  { href: "/trends", label: "Trends" },
   { href: "/map", label: "Coverage map" },
 ];
 
