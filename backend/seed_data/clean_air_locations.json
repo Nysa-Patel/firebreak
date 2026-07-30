@@ -1,5 +1,45 @@
 [
   {
+    "name": "Chico Branch Library",
+    "category": "library",
+    "address": "1108 Sherman Ave, Chico, CA 95926",
+    "lat": 39.7285,
+    "lon": -121.8375,
+    "notes": "Public library, open to all, air-conditioned/filtered indoor space."
+  },
+  {
+    "name": "Paradise Branch Library",
+    "category": "library",
+    "address": "5926 Clark Rd, Paradise, CA 95969",
+    "lat": 39.7596,
+    "lon": -121.6219,
+    "notes": "Serves the Paradise Ridge area, one of the most monitoring-sparse parts of Butte County."
+  },
+  {
+    "name": "Chico Senior Center",
+    "category": "community_center",
+    "address": "1856 Manzanita Ave, Chico, CA 95926",
+    "lat": 39.7392,
+    "lon": -121.8433,
+    "notes": "Community center with indoor seating areas."
+  },
+  {
+    "name": "Oroville Branch Library",
+    "category": "library",
+    "address": "1820 Mitchell Ave, Oroville, CA 95966",
+    "lat": 39.5138,
+    "lon": -121.5564,
+    "notes": "Covers the Oroville area, another gap between official monitors."
+  },
+  {
+    "name": "Meriam Library, Chico State",
+    "category": "library",
+    "address": "400 W 1st St, Chico, CA 95929",
+    "lat": 39.73,
+    "lon": -121.8494,
+    "notes": "University library, publicly accessible reading areas."
+  },
+  {
     "name": "YMCA of the Foothills",
     "category": "community_center",
     "address": "1930 Foothill Boulevard, La Ca\u00f1ada Flintridge, CA, 91011",

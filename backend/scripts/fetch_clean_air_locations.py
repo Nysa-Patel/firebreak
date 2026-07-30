@@ -1,24 +1,71 @@
 """Pull real, nationwide public libraries and community centers from
-OpenStreetMap (via the Overpass API) into seed_data/clean_air_locations.json.
+OpenStreetMap (via the Overpass API) into seed_data/clean_air_locations.json,
+merged with the original hand-picked Chico/Butte County entries.
 
-This replaces the original 5-entry, Chico-only hand-picked list with real
-addresses across the whole US (~9,700 nodes) -- these are meant to be actual
-places someone might go to during a smoke event, so accuracy matters more
-than for most demo data; OSM's `amenity=library` / `amenity=community_centre`
-tags are the most reliable free source of real, geocoded public buildings at
-this scale (~6,500 libraries + ~3,200 community centers).
+OSM's amenity tags don't happen to include those specific well-known Chico
+institutions (or they're missing the name/address tags this script requires),
+so a straight replacement silently dropped the demo region's own curated,
+narrative-relevant entries (e.g. the Paradise Ridge monitoring-desert framing)
+down to a single incidental match. Keeping both means the demo region stays
+accurate and the rest of the country gets real coverage too -- these are
+meant to be actual places someone might go to during a smoke event, so
+accuracy matters more than for most demo data.
 
 Run from backend/: `python -m scripts.fetch_clean_air_locations`
 """
 
 import json
-import time
 from pathlib import Path
 
 import httpx
 
 _OUT_PATH = Path(__file__).resolve().parent.parent / "seed_data" / "clean_air_locations.json"
 _OVERPASS_URL = "https://overpass-api.de/api/interpreter"
+
+# The original hand-picked demo-region entries -- kept verbatim rather than
+# relying on OSM to happen to have them under matching tags/names.
+_CURATED_ENTRIES = [
+    {
+        "name": "Chico Branch Library",
+        "category": "library",
+        "address": "1108 Sherman Ave, Chico, CA 95926",
+        "lat": 39.7285,
+        "lon": -121.8375,
+        "notes": "Public library, open to all, air-conditioned/filtered indoor space.",
+    },
+    {
+        "name": "Paradise Branch Library",
+        "category": "library",
+        "address": "5926 Clark Rd, Paradise, CA 95969",
+        "lat": 39.7596,
+        "lon": -121.6219,
+        "notes": "Serves the Paradise Ridge area, one of the most monitoring-sparse parts of Butte County.",
+    },
+    {
+        "name": "Chico Senior Center",
+        "category": "community_center",
+        "address": "1856 Manzanita Ave, Chico, CA 95926",
+        "lat": 39.7392,
+        "lon": -121.8433,
+        "notes": "Community center with indoor seating areas.",
+    },
+    {
+        "name": "Oroville Branch Library",
+        "category": "library",
+        "address": "1820 Mitchell Ave, Oroville, CA 95966",
+        "lat": 39.5138,
+        "lon": -121.5564,
+        "notes": "Covers the Oroville area, another gap between official monitors.",
+    },
+    {
+        "name": "Meriam Library, Chico State",
+        "category": "library",
+        "address": "400 W 1st St, Chico, CA 95929",
+        "lat": 39.73,
+        "lon": -121.8494,
+        "notes": "University library, publicly accessible reading areas.",
+    },
+]
 
 _QUERY = """
 [out:json][timeout:180];
@@ -86,10 +133,13 @@ def main() -> None:
         )
 
     print(
-        f"Kept {len(entries)} entries "
+        f"Kept {len(entries)} OSM entries "
         f"(skipped {skipped_no_name} with no name, {skipped_no_address} with no usable address)."
     )
-    _OUT_PATH.write_text(json.dumps(entries, indent=2))
+
+    combined = _CURATED_ENTRIES + entries
+    print(f"Combined with {len(_CURATED_ENTRIES)} curated entries -> {len(combined)} total.")
+    _OUT_PATH.write_text(json.dumps(combined, indent=2))
     print(f"Wrote {_OUT_PATH}")
 
 
