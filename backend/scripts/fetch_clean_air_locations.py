@@ -79,12 +79,16 @@ out body;
 
 
 def _build_address(tags: dict) -> str | None:
-    """None if the tags don't have enough to be a useful, navigable address
-    -- a bare state code ("CA") is real data but not somewhere a person in a
-    smoke event could actually find, so it's treated the same as missing."""
+    """None if the tags don't have enough to be a useful, navigable address.
+    A city is the hard minimum -- a street with no city ("1414 21st Street")
+    or a bare state code with no city ("Mill Street, CA, 95945") isn't
+    something a person in a smoke event could actually find, even though the
+    earlier street-or-city check let both of those through. Also require a
+    street or postcode alongside the city, so "some city, CA" alone (no way
+    to narrow down where in that city) doesn't count as navigable either."""
     housenumber, street = tags.get("addr:housenumber"), tags.get("addr:street")
     city, state, postcode = tags.get("addr:city"), tags.get("addr:state"), tags.get("addr:postcode")
-    if not street and not city:
+    if not city or not (street or postcode):
         return None
 
     parts = []
@@ -92,9 +96,7 @@ def _build_address(tags: dict) -> str | None:
         parts.append(f"{housenumber} {street}")
     elif street:
         parts.append(street)
-    locality = ", ".join(p for p in [city, state] if p)
-    if locality:
-        parts.append(locality)
+    parts.append(", ".join(p for p in [city, state] if p))
     if postcode:
         parts.append(postcode)
     return ", ".join(parts)

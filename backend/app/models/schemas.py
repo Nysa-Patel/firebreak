@@ -6,6 +6,9 @@ from pydantic import BaseModel, Field
 DensityClass = Literal["clear", "hazy", "heavy"]
 AqiCategory = Literal["good", "moderate", "unhealthy_sensitive", "unhealthy", "very_unhealthy", "hazardous"]
 SymptomSeverity = Literal["none", "mild", "moderate", "severe"]
+SymptomTier = Literal["mild", "moderate", "critical"]
+ConditionBucket = Literal["general", "asthma_copd", "cardiovascular", "pregnancy"]
+SymptomFlagLevel = Literal["none", "mild", "elevated", "urgent", "emergency"]
 
 
 class AqiResponse(BaseModel):
@@ -28,6 +31,7 @@ class ClassifySmokeResponse(BaseModel):
 class RiskProfile(BaseModel):
     age: int = Field(ge=0, le=120)
     has_respiratory_condition: bool = False
+    has_cardiovascular_condition: bool = False
     is_pregnant: bool = False
     has_outdoor_occupation: bool = False
 
@@ -36,6 +40,7 @@ class RiskScoreRequest(BaseModel):
     profile: RiskProfile
     aqi_category: AqiCategory
     density_class: Optional[DensityClass] = None
+    symptom_level: SymptomFlagLevel = "none"
 
 
 class RiskScoreResponse(BaseModel):
@@ -131,3 +136,27 @@ class PersonalThresholdResponse(BaseModel):
     confidence: Literal["low", "moderate", "high"] = "low"
     method: str = "logistic_regression_per_device"
     message: str
+
+
+class SymptomChecklistItem(BaseModel):
+    id: str
+    label: str
+    tier: SymptomTier
+
+
+class SymptomChecklistResponse(BaseModel):
+    conditions: dict[ConditionBucket, list[SymptomChecklistItem]]
+    disclaimer: str
+
+
+class SymptomFlagRequest(BaseModel):
+    checked_symptom_ids: list[str] = []
+
+
+class SymptomFlagResponse(BaseModel):
+    level: SymptomFlagLevel
+    message: str
+    matched_critical: list[str]
+    matched_moderate: list[str]
+    matched_mild: list[str]
+    disclaimer: str

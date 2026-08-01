@@ -28,6 +28,7 @@ export interface ClassifySmokeResponse {
 export interface RiskProfile {
   age: number;
   has_respiratory_condition: boolean;
+  has_cardiovascular_condition: boolean;
   is_pregnant: boolean;
   has_outdoor_occupation: boolean;
 }
@@ -36,6 +37,30 @@ export interface RiskScoreResponse {
   risk_level: "low" | "moderate" | "high" | "very_high";
   recommendation: string;
   contributing_factors: string[];
+}
+
+export type SymptomTier = "mild" | "moderate" | "critical";
+export type ConditionBucket = "general" | "asthma_copd" | "cardiovascular" | "pregnancy";
+export type SymptomFlagLevel = "none" | "mild" | "elevated" | "urgent" | "emergency";
+
+export interface SymptomChecklistItem {
+  id: string;
+  label: string;
+  tier: SymptomTier;
+}
+
+export interface SymptomChecklistResponse {
+  conditions: Partial<Record<ConditionBucket, SymptomChecklistItem[]>>;
+  disclaimer: string;
+}
+
+export interface SymptomFlagResponse {
+  level: SymptomFlagLevel;
+  message: string;
+  matched_critical: string[];
+  matched_moderate: string[];
+  matched_mild: string[];
+  disclaimer: string;
 }
 
 export interface SubmissionOut {

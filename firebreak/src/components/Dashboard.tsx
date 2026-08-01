@@ -6,7 +6,14 @@ import { useGeolocation } from "@/lib/useGeolocation";
 import { useRiskProfile } from "@/lib/useRiskProfile";
 import { PERSONAS } from "@/lib/personas";
 import { DEMO_REGION } from "@/lib/demoRegion";
-import type { AqiResponse, CleanAirLocationOut, ClassifySmokeResponse, RiskScoreResponse, TrendResponse } from "@/lib/types";
+import type {
+  AqiResponse,
+  CleanAirLocationOut,
+  ClassifySmokeResponse,
+  RiskScoreResponse,
+  SymptomFlagLevel,
+  TrendResponse,
+} from "@/lib/types";
 import type { InitialDashboardData } from "@/lib/serverFetch";
 import { RiskProfileForm } from "@/components/RiskProfileForm";
 import { AqiGauge } from "@/components/AqiGauge";
@@ -16,6 +23,7 @@ import { CleanAirLocations } from "@/components/CleanAirLocations";
 import { TrendSparkline } from "@/components/TrendSparkline";
 import { PersonaToggle } from "@/components/PersonaToggle";
 import { SymptomLogger } from "@/components/SymptomLogger";
+import { SymptomChecklistPanel } from "@/components/SymptomChecklistPanel";
 
 export function Dashboard({ initial }: { initial: InitialDashboardData }) {
   const { lat, lon, error: geoError } = useGeolocation();
@@ -32,6 +40,7 @@ export function Dashboard({ initial }: { initial: InitialDashboardData }) {
   const [locations, setLocations] = useState<CleanAirLocationOut[]>(initial.locations);
   const [trend, setTrend] = useState<TrendResponse | null>(initial.trend);
   const [personaKey, setPersonaKey] = useState<string | null>(null);
+  const [symptomFlagLevel, setSymptomFlagLevel] = useState<SymptomFlagLevel>("none");
 
   const effectiveProfile = personaKey ? PERSONAS.find((p) => p.key === personaKey)!.profile : profile;
 
@@ -66,10 +75,10 @@ export function Dashboard({ initial }: { initial: InitialDashboardData }) {
 
   useEffect(() => {
     if (!aqi || !profileLoaded) return;
-    scoreRisk(effectiveProfile, aqi.category, smokeResult?.density_class)
+    scoreRisk(effectiveProfile, aqi.category, smokeResult?.density_class, symptomFlagLevel)
       .then(setRiskResult)
       .catch(() => setRiskResult(null));
-  }, [aqi, effectiveProfile, profileLoaded, smokeResult]);
+  }, [aqi, effectiveProfile, profileLoaded, smokeResult, symptomFlagLevel]);
 
   return (
     <main className="max-w-5xl mx-auto w-full px-4 py-8">
@@ -97,6 +106,13 @@ export function Dashboard({ initial }: { initial: InitialDashboardData }) {
 
         <div className="space-y-5 min-w-0">
           <RiskProfileForm profile={profile} onChange={setProfile} disabled={personaKey != null} />
+          <SymptomChecklistPanel
+            profile={effectiveProfile}
+            aqi={aqi?.aqi ?? null}
+            densityClass={smokeResult?.density_class ?? null}
+            onFlagChange={setSymptomFlagLevel}
+            resetKey={personaKey ?? "self"}
+          />
           <CleanAirLocations locations={locations} />
         </div>
       </div>

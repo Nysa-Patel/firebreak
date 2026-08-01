@@ -8,9 +8,31 @@ ML model here. The CV model's job is upstream of this (estimating local smoke
 density from a photo) -- this engine just turns that + AQI into a decision.
 """
 
-from app.models.schemas import DensityClass, RiskProfile, RiskScoreRequest, RiskScoreResponse, AqiCategory
+from app.models.schemas import (
+    DensityClass,
+    RiskProfile,
+    RiskScoreRequest,
+    RiskScoreResponse,
+    AqiCategory,
+    SymptomFlagLevel,
+)
+from app.services.symptom_rules import MESSAGES as SYMPTOM_MESSAGES
 
 _LEVELS = ["low", "moderate", "high", "very_high"]
+
+# Symptom flags (app.services.symptom_rules) extend this output rather than
+# replace it: they only ever push the level up, never down. "emergency" uses
+# an escalation of len(_LEVELS) specifically so it forces the ceiling
+# (very_high) regardless of what AQI/profile alone would have produced --
+# a reported emergency warning sign overrides the ambient-conditions read,
+# it doesn't average with it.
+_SYMPTOM_ESCALATION: dict[SymptomFlagLevel, int] = {
+    "none": 0,
+    "mild": 0,
+    "elevated": 1,
+    "urgent": 2,
+    "emergency": len(_LEVELS),
+}
 
 _AQI_LEVEL_INDEX: dict[AqiCategory, int] = {
     "good": 0,
@@ -53,6 +75,9 @@ def score_risk(request: RiskScoreRequest) -> RiskScoreResponse:
     if profile.has_respiratory_condition:
         sensitive_factor_count += 1
         factors.append("asthma/respiratory condition")
+    if profile.has_cardiovascular_condition:
+        sensitive_factor_count += 1
+        factors.append("cardiovascular condition")
     if profile.is_pregnant:
         sensitive_factor_count += 1
         factors.append("pregnancy")
@@ -67,11 +92,23 @@ def score_risk(request: RiskScoreRequest) -> RiskScoreResponse:
     # silently escalate past "very_high" -- that's already the ceiling.
     escalation = min(sensitive_factor_count, len(_LEVELS) - 1 - base_index)
     final_index = base_index + max(escalation, 0)
+
+    symptom_escalation = _SYMPTOM_ESCALATION[request.symptom_level]
+    final_index = min(final_index + symptom_escalation, len(_LEVELS) - 1)
     risk_level = _LEVELS[final_index]
 
     recommendation = _RECOMMENDATIONS[risk_level]
     if sensitive_factor_count and risk_level in ("low", "moderate"):
         recommendation += " Because of your profile (" + ", ".join(factors[-sensitive_factor_count:]) + "), consider extra caution even at this level."
+
+    if request.symptom_level in ("emergency", "urgent"):
+        # Lead with the safety message -- this is the most important thing to
+        # read, not an addendum to the AQI-based text.
+        recommendation = SYMPTOM_MESSAGES[request.symptom_level] + " " + recommendation
+        factors.append(f"self-reported symptoms ({request.symptom_level})")
+    elif request.symptom_level in ("elevated", "mild"):
+        recommendation += " " + SYMPTOM_MESSAGES[request.symptom_level]
+        factors.append(f"self-reported symptoms ({request.symptom_level})")
 
     return RiskScoreResponse(
         risk_level=risk_level,

@@ -35,7 +35,8 @@ export function RiskProfileForm({ profile, onChange, disabled = false }: Props) 
 
       {(
         [
-          ["has_respiratory_condition", "Asthma / respiratory condition"],
+          ["has_respiratory_condition", "Asthma / COPD / respiratory condition"],
+          ["has_cardiovascular_condition", "Cardiovascular disease"],
           ["is_pregnant", "Pregnant"],
           ["has_outdoor_occupation", "Outdoor occupation"],
         ] as const

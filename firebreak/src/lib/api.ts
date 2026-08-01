@@ -7,6 +7,9 @@ import type {
   RiskScoreResponse,
   SubmissionDetailOut,
   SubmissionOut,
+  SymptomChecklistResponse,
+  SymptomFlagLevel,
+  SymptomFlagResponse,
   SymptomLogOut,
   SymptomSeverity,
   TrendResponse,
@@ -85,12 +88,18 @@ export function classifySmoke(photo: File): Promise<ClassifySmokeResponse> {
 export function scoreRisk(
   profile: RiskProfile,
   aqiCategory: AqiCategory,
-  densityClass?: DensityClass
+  densityClass?: DensityClass,
+  symptomLevel?: SymptomFlagLevel
 ): Promise<RiskScoreResponse> {
   return apiFetch("/api/risk-score", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ profile, aqi_category: aqiCategory, density_class: densityClass }),
+    body: JSON.stringify({
+      profile,
+      aqi_category: aqiCategory,
+      density_class: densityClass,
+      symptom_level: symptomLevel ?? "none",
+    }),
   });
 }
 
@@ -142,6 +151,18 @@ export function getSymptomLogs(deviceId: string): Promise<SymptomLogOut[]> {
 
 export function getPersonalThreshold(deviceId: string): Promise<PersonalThresholdResponse> {
   return apiFetch(`/api/personal-threshold?device_id=${deviceId}`);
+}
+
+export function getSymptomChecklist(): Promise<SymptomChecklistResponse> {
+  return apiFetch("/api/symptom-checklist");
+}
+
+export function evaluateSymptomFlag(checkedSymptomIds: string[]): Promise<SymptomFlagResponse> {
+  return apiFetch("/api/symptom-flag", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ checked_symptom_ids: checkedSymptomIds }),
+  });
 }
 
 /** Fire a lightweight request immediately on page load to start waking a

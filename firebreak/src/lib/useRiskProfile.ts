@@ -8,6 +8,7 @@ const STORAGE_KEY = "wildfire-risk-profile";
 const DEFAULT_PROFILE: RiskProfile = {
   age: 30,
   has_respiratory_condition: false,
+  has_cardiovascular_condition: false,
   is_pregnant: false,
   has_outdoor_occupation: false,
 };
