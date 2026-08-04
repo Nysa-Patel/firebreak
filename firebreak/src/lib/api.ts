@@ -4,6 +4,7 @@ import type {
   AskResponse,
   CleanAirLocationOut,
   ClassifySmokeResponse,
+  GeocodeResult,
   PersonalThresholdResponse,
   RiskProfile,
   RiskScoreResponse,
@@ -173,6 +174,10 @@ export function askQuestion(question: string, context?: AskContext): Promise<Ask
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ question, context }),
   });
+}
+
+export function geocodeLocation(query: string): Promise<GeocodeResult[]> {
+  return apiFetch(`/api/geocode?q=${encodeURIComponent(query)}`);
 }
 
 /** Fire a lightweight request immediately on page load to start waking a

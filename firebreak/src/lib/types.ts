@@ -149,3 +149,9 @@ export interface AskResponse {
   sources: AskSource[];
   disclaimer: string;
 }
+
+export interface GeocodeResult {
+  label: string;
+  lat: number;
+  lon: number;
+}

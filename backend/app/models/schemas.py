@@ -186,3 +186,9 @@ class AskResponse(BaseModel):
     grounded: bool
     sources: list[AskSource]
     disclaimer: str
+
+
+class GeocodeResult(BaseModel):
+    label: str
+    lat: float
+    lon: float

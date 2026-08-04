@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { LocationPicker } from "@/components/LocationPicker";
 
 function FlameIcon() {
   return (
@@ -53,6 +54,7 @@ export function Header() {
             );
           })}
         </nav>
+        <LocationPicker />
       </div>
     </header>
   );
