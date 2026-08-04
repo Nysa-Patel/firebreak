@@ -128,3 +128,24 @@ export interface PersonalThresholdResponse {
   method: string;
   message: string;
 }
+
+export interface AskContext {
+  aqi?: number | null;
+  aqi_category?: AqiCategory | null;
+  density_class?: DensityClass | null;
+  symptom_level?: SymptomFlagLevel | null;
+  symptom_message?: string | null;
+}
+
+export interface AskSource {
+  id: string;
+  title: string;
+  source_label: string;
+}
+
+export interface AskResponse {
+  answer: string;
+  grounded: boolean;
+  sources: AskSource[];
+  disclaimer: string;
+}

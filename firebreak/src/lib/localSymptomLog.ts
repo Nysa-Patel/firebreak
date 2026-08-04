@@ -8,6 +8,7 @@ export interface SymptomChecklistLogEntry {
   checked_symptom_ids: string[];
   active_conditions: ConditionBucket[];
   flag_level: SymptomFlagLevel;
+  flag_message: string;
   aqi: number | null;
   density_class: DensityClass | null;
 }

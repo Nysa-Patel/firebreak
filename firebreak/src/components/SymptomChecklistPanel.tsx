@@ -91,6 +91,7 @@ export function SymptomChecklistPanel({ profile, aqi, densityClass, onFlagChange
         checked_symptom_ids: nextChecked,
         active_conditions: activeConditions,
         flag_level: result.level,
+        flag_message: result.message,
         aqi,
         density_class: densityClass,
       });

@@ -160,3 +160,29 @@ class SymptomFlagResponse(BaseModel):
     matched_moderate: list[str]
     matched_mild: list[str]
     disclaimer: str
+
+
+class AskContext(BaseModel):
+    aqi: Optional[int] = None
+    aqi_category: Optional[AqiCategory] = None
+    density_class: Optional[DensityClass] = None
+    symptom_level: Optional[SymptomFlagLevel] = None
+    symptom_message: Optional[str] = None
+
+
+class AskRequest(BaseModel):
+    question: str = Field(min_length=1, max_length=500)
+    context: Optional[AskContext] = None
+
+
+class AskSource(BaseModel):
+    id: str
+    title: str
+    source_label: str
+
+
+class AskResponse(BaseModel):
+    answer: str
+    grounded: bool
+    sources: list[AskSource]
+    disclaimer: str

@@ -1,5 +1,7 @@
 import type {
   AqiResponse,
+  AskContext,
+  AskResponse,
   CleanAirLocationOut,
   ClassifySmokeResponse,
   PersonalThresholdResponse,
@@ -162,6 +164,14 @@ export function evaluateSymptomFlag(checkedSymptomIds: string[]): Promise<Sympto
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ checked_symptom_ids: checkedSymptomIds }),
+  });
+}
+
+export function askQuestion(question: string, context?: AskContext): Promise<AskResponse> {
+  return apiFetch("/api/ask", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ question, context }),
   });
 }
 
