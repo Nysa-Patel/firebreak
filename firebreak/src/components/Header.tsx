@@ -9,9 +9,8 @@ function FlameIcon() {
     <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden>
       <defs>
         <linearGradient id="flame-gradient" x1="4" y1="20" x2="18" y2="2" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="var(--accent-4)" />
-          <stop offset="55%" stopColor="var(--accent)" />
-          <stop offset="100%" stopColor="var(--accent-2)" />
+          <stop offset="0%" stopColor="var(--accent)" />
+          <stop offset="100%" stopColor="var(--accent-4)" />
         </linearGradient>
       </defs>
       <path
@@ -38,18 +37,13 @@ export function Header() {
       style={{ background: "color-mix(in srgb, var(--background) 85%, transparent)", borderBottom: "1px solid var(--border)" }}
     >
       <div className="max-w-5xl mx-auto w-full px-4 h-16 flex items-center gap-6">
-        <Link href="/" className="flex items-center gap-2 text-[19px] shrink-0 font-display font-semibold">
+        <Link
+          href="/"
+          className="flex items-center gap-2 text-[19px] shrink-0 font-display font-bold"
+          style={{ color: "var(--accent)" }}
+        >
           <FlameIcon />
-          <span
-            style={{
-              backgroundImage: "var(--accent-gradient)",
-              WebkitBackgroundClip: "text",
-              backgroundClip: "text",
-              color: "transparent",
-            }}
-          >
-            Firebreak
-          </span>
+          <span>Firebreak</span>
         </Link>
         <nav className="flex items-center gap-1 text-sm">
           {NAV_LINKS.map((link) => {
