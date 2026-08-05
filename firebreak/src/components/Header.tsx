@@ -49,7 +49,7 @@ export function Header() {
                 className="px-3.5 py-1.5 rounded-full transition-colors"
                 style={{
                   color: active ? "#fff" : "var(--text-secondary)",
-                  background: active ? "var(--accent)" : "transparent",
+                  background: active ? "#2563eb" : "transparent",
                   fontWeight: active ? 700 : 500,
                 }}
               >
