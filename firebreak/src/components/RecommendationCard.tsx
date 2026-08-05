@@ -17,8 +17,15 @@ export function RecommendationCard({ result }: { result: RiskScoreResponse | nul
   const color = RISK_LEVEL_COLOR[result.risk_level];
 
   return (
-    <div className="card p-6" style={{ borderColor: `color-mix(in srgb, ${color} 40%, var(--border))` }}>
-      <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>
+    <div
+      className="card p-6"
+      style={{
+        borderColor: `color-mix(in srgb, ${color} 45%, var(--border))`,
+        borderWidth: 2,
+        background: `linear-gradient(160deg, color-mix(in srgb, ${color} 8%, var(--surface-1)), var(--surface-1) 55%)`,
+      }}
+    >
+      <p className="text-xs font-bold uppercase tracking-wide font-display" style={{ color }}>
         For you, right now
       </p>
 
@@ -34,7 +41,7 @@ export function RecommendationCard({ result }: { result: RiskScoreResponse | nul
                 <span
                   key={factor}
                   className="text-xs px-2 py-1 rounded-full"
-                  style={{ background: "var(--surface-2)", color: "var(--text-secondary)" }}
+                  style={{ background: "var(--surface-2)", color: "var(--text-secondary)", border: `1px solid color-mix(in srgb, ${color} 35%, var(--border))` }}
                 >
                   {factor}
                 </span>

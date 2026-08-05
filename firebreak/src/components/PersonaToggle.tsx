@@ -7,6 +7,8 @@ interface Props {
   onSelect: (key: string | null) => void;
 }
 
+const PERSONA_COLORS = ["var(--accent-2)", "var(--accent-3)", "var(--accent-4)", "var(--accent)"];
+
 export function PersonaToggle({ activeKey, onSelect }: Props) {
   return (
     <div className="card p-4">
@@ -16,29 +18,35 @@ export function PersonaToggle({ activeKey, onSelect }: Props) {
       <div className="flex flex-wrap gap-2">
         <button
           onClick={() => onSelect(null)}
-          className="text-sm px-3 py-1.5 rounded-full transition-colors"
+          className="text-sm px-3 py-1.5 rounded-full transition-all"
           style={{
             background: activeKey === null ? "var(--accent)" : "var(--surface-2)",
             color: activeKey === null ? "#fff" : "var(--text-secondary)",
-            fontWeight: activeKey === null ? 600 : 400,
+            fontWeight: activeKey === null ? 700 : 500,
+            boxShadow: activeKey === null ? "0 4px 14px -4px color-mix(in srgb, var(--accent) 60%, transparent)" : "none",
           }}
         >
           My profile
         </button>
-        {PERSONAS.map((p) => (
-          <button
-            key={p.key}
-            onClick={() => onSelect(p.key)}
-            className="text-sm px-3 py-1.5 rounded-full transition-colors"
-            style={{
-              background: activeKey === p.key ? "var(--accent)" : "var(--surface-2)",
-              color: activeKey === p.key ? "#fff" : "var(--text-secondary)",
-              fontWeight: activeKey === p.key ? 600 : 400,
-            }}
-          >
-            {p.label}
-          </button>
-        ))}
+        {PERSONAS.map((p, i) => {
+          const color = PERSONA_COLORS[i % PERSONA_COLORS.length];
+          const active = activeKey === p.key;
+          return (
+            <button
+              key={p.key}
+              onClick={() => onSelect(p.key)}
+              className="text-sm px-3 py-1.5 rounded-full transition-all"
+              style={{
+                background: active ? color : "var(--surface-2)",
+                color: active ? "#fff" : "var(--text-secondary)",
+                fontWeight: active ? 700 : 500,
+                boxShadow: active ? `0 4px 14px -4px color-mix(in srgb, ${color} 60%, transparent)` : "none",
+              }}
+            >
+              {p.label}
+            </button>
+          );
+        })}
       </div>
       {activeKey && (
         <p className="text-xs mt-2" style={{ color: "var(--status-warning)" }}>

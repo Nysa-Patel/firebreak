@@ -110,7 +110,7 @@ export function LocationPicker() {
               type="submit"
               disabled={searching || !query.trim()}
               className="text-sm font-medium rounded-lg px-3 py-1.5 disabled:opacity-50 shrink-0"
-              style={{ background: "var(--accent)", color: "#fff" }}
+              style={{ background: "var(--accent-gradient)", color: "#fff" }}
             >
               {searching ? "..." : "Search"}
             </button>

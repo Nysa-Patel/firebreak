@@ -2,57 +2,81 @@
 
 :root {
   color-scheme: light;
-  --background: #f9f9f7;
+  --background: #fdf9f4;
   --surface-1: #ffffff;
-  --surface-2: #f2f1ee;
-  --text-primary: #0b0b0b;
-  --text-secondary: #52514e;
-  --text-muted: #898781;
-  --gridline: #e1e0d9;
-  --border: rgba(11, 11, 11, 0.1);
-  --accent: #2a78d6;
-  --status-good: #0ca30c;
-  --status-warning: #b8790f;
-  --status-serious: #c15a35;
-  --status-critical: #d03b3b;
-  --success-text: #006300;
+  --surface-2: #f5efe6;
+  --text-primary: #1a1023;
+  --text-secondary: #5b4f5e;
+  --text-muted: #8f8391;
+  --gridline: #ece2d6;
+  --border: rgba(26, 16, 35, 0.1);
+  --accent: #e11d48;
+  --accent-2: #9333ea;
+  --accent-3: #0891b2;
+  --accent-4: #d97706;
+  --accent-gradient: linear-gradient(135deg, var(--accent), var(--accent-2));
+  --status-good: #16a34a;
+  --status-warning: #b45309;
+  --status-serious: #c2410c;
+  --status-critical: #dc2626;
+  --success-text: #16a34a;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--text-primary);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-body);
+  --font-display: var(--font-display);
   --font-mono: var(--font-geist-mono);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     color-scheme: dark;
-    --background: #0d0d0d;
-    --surface-1: #1a1a19;
-    --surface-2: #232322;
-    --text-primary: #ffffff;
-    --text-secondary: #c3c2b7;
-    --text-muted: #898781;
-    --gridline: #2c2c2a;
-    --border: rgba(255, 255, 255, 0.1);
-    --accent: #3987e5;
-    --status-good: #0ca30c;
-    --status-warning: #fab219;
-    --status-serious: #ec835a;
-    --status-critical: #d03b3b;
-    --success-text: #0ca30c;
+    --background: #120b1e;
+    --surface-1: #1e1530;
+    --surface-2: #291d3d;
+    --text-primary: #fdf6ff;
+    --text-secondary: #cbb9d6;
+    --text-muted: #9c8aa8;
+    --gridline: #3a2b52;
+    --border: rgba(255, 255, 255, 0.12);
+    --accent: #ff5d73;
+    --accent-2: #a855f7;
+    --accent-3: #22d3ee;
+    --accent-4: #fbbf24;
+    --accent-gradient: linear-gradient(135deg, var(--accent), var(--accent-2));
+    --status-good: #22c55e;
+    --status-warning: #fbbf24;
+    --status-serious: #fb923c;
+    --status-critical: #ef4444;
+    --success-text: #22c55e;
   }
 }
 
 body {
-  background: var(--background);
+  background:
+    radial-gradient(circle at 12% 8%, color-mix(in srgb, var(--accent) 20%, transparent) 0%, transparent 42%),
+    radial-gradient(circle at 88% 12%, color-mix(in srgb, var(--accent-2) 18%, transparent) 0%, transparent 42%),
+    radial-gradient(circle at 50% 105%, color-mix(in srgb, var(--accent-3) 14%, transparent) 0%, transparent 50%),
+    var(--background);
+  background-attachment: fixed;
   color: var(--text-primary);
   font-family: var(--font-sans), system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display), var(--font-sans), sans-serif;
 }
 
 .card {
   background: var(--surface-1);
   border: 1px solid var(--border);
-  border-radius: 0.75rem;
+  border-radius: 1.25rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px -8px color-mix(in srgb, var(--accent) 25%, transparent);
 }

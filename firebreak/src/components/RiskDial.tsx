@@ -53,6 +53,15 @@ export function RiskDial({ level }: { level: Level }) {
   return (
     <div className="flex flex-col items-center">
       <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} width={WIDTH} height={HEIGHT} role="img" aria-label={`Risk level: ${RISK_LEVEL_LABEL[level]}`}>
+        <defs>
+          <filter id="dial-glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="4" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
         {SEGMENTS.map((seg) => (
           <path
             key={seg.level}
@@ -61,7 +70,8 @@ export function RiskDial({ level }: { level: Level }) {
             stroke={RISK_LEVEL_COLOR[seg.level]}
             strokeWidth={14}
             strokeLinecap="butt"
-            opacity={seg.level === level ? 1 : 0.35}
+            opacity={seg.level === level ? 1 : 0.3}
+            filter={seg.level === level ? "url(#dial-glow)" : undefined}
             style={{ transition: "opacity 0.4s ease" }}
           />
         ))}
@@ -83,9 +93,10 @@ export function RiskDial({ level }: { level: Level }) {
             strokeLinecap="round"
           />
         </g>
-        <circle cx={CENTER_X} cy={CENTER_Y} r={6} fill="var(--text-primary)" />
+        <circle cx={CENTER_X} cy={CENTER_Y} r={7} fill={color} style={{ transition: "fill 0.4s ease" }} />
+        <circle cx={CENTER_X} cy={CENTER_Y} r={3} fill="var(--surface-1)" />
       </svg>
-      <p className="font-semibold -mt-2" style={{ fontSize: 20, color, transition: "color 0.4s ease" }}>
+      <p className="font-display font-semibold -mt-2 tracking-wide" style={{ fontSize: 21, color, transition: "color 0.4s ease" }}>
         {RISK_LEVEL_LABEL[level]}
       </p>
     </div>
