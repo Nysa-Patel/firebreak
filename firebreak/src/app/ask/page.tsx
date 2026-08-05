@@ -175,7 +175,7 @@ export default function AskPage() {
           type="submit"
           disabled={sending || !input.trim()}
           className="text-sm font-medium rounded-full px-5 py-2.5 disabled:opacity-50"
-          style={{ background: "var(--accent-gradient)", color: "#fff", boxShadow: "0 4px 14px -4px color-mix(in srgb, var(--accent) 60%, transparent)" }}
+          style={{ background: "var(--accent)", color: "#fff" }}
         >
           Send
         </button>

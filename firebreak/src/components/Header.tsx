@@ -7,15 +7,9 @@ import { LocationPicker } from "@/components/LocationPicker";
 function FlameIcon() {
   return (
     <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <defs>
-        <linearGradient id="flame-gradient" x1="4" y1="20" x2="18" y2="2" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="var(--accent)" />
-          <stop offset="100%" stopColor="var(--accent-4)" />
-        </linearGradient>
-      </defs>
       <path
         d="M12 2c1 3-3 4-3 8a3 3 0 0 0 6 0c1 1 2 2.5 2 4.5A5.5 5.5 0 0 1 11.5 20 6 6 0 0 1 6 14c0-4 3-5 3-8 1 1 2 2 2 3 0-3-1-5.5 1-7Z"
-        fill="url(#flame-gradient)"
+        fill="#f97316"
       />
     </svg>
   );
@@ -52,13 +46,11 @@ export function Header() {
               <Link
                 key={link.href}
                 href={link.href}
-                className="px-3.5 py-1.5 rounded-full transition-all"
+                className="px-3.5 py-1.5 rounded-full transition-colors"
                 style={{
                   color: active ? "#fff" : "var(--text-secondary)",
-                  backgroundImage: active ? "var(--accent-gradient)" : "none",
-                  background: active ? undefined : "transparent",
+                  background: active ? "var(--accent)" : "transparent",
                   fontWeight: active ? 700 : 500,
-                  boxShadow: active ? "0 4px 14px -4px color-mix(in srgb, var(--accent) 60%, transparent)" : "none",
                 }}
               >
                 {link.label}
