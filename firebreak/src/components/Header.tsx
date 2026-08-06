@@ -34,7 +34,7 @@ export function Header() {
         <Link
           href="/"
           className="flex items-center gap-2 text-[19px] shrink-0 font-display font-bold"
-          style={{ color: "var(--accent)" }}
+          style={{ color: "var(--text-primary)" }}
         >
           <FlameIcon />
           <span>Firebreak</span>
