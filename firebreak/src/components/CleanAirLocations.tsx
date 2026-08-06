@@ -31,7 +31,7 @@ export function CleanAirLocations({ locations }: { locations: CleanAirLocationOu
             <li key={loc.id} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0" style={{ borderColor: "var(--gridline)" }}>
               <span
                 className="inline-flex items-center justify-center rounded-full shrink-0"
-                style={{ width: 36, height: 36, background: "var(--surface-2)", color: "var(--accent)" }}
+                style={{ width: 36, height: 36, background: "var(--surface-2)", color: "var(--text-secondary)" }}
               >
                 <Icon size={18} />
               </span>

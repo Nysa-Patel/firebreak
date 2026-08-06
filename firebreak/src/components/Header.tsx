@@ -48,8 +48,8 @@ export function Header() {
                 href={link.href}
                 className="px-3.5 py-1.5 rounded-full transition-colors"
                 style={{
-                  color: active ? "#fff" : "var(--text-secondary)",
-                  background: active ? "#2563eb" : "transparent",
+                  color: active ? "#111827" : "var(--text-secondary)",
+                  background: active ? "#e5e7eb" : "transparent",
                   fontWeight: active ? 700 : 500,
                 }}
               >

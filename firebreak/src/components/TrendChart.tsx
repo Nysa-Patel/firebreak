@@ -128,13 +128,13 @@ export function TrendChart({
         );
       })}
 
-      <path d={line} fill="none" stroke="var(--accent)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+      <path d={line} fill="none" stroke="#e5e7eb" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
 
       {forecastLine && (
         <path
           d={forecastLine}
           fill="none"
-          stroke="var(--accent)"
+          stroke="#e5e7eb"
           strokeWidth={2}
           strokeDasharray="5,4"
           strokeLinecap="round"
@@ -150,7 +150,7 @@ export function TrendChart({
           cy={p.y}
           r={3.5}
           fill="var(--surface-1)"
-          stroke="var(--accent)"
+          stroke="#e5e7eb"
           strokeWidth={2}
           opacity={0.85}
         />

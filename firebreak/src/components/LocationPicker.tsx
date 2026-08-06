@@ -110,7 +110,7 @@ export function LocationPicker() {
               type="submit"
               disabled={searching || !query.trim()}
               className="text-sm font-medium rounded-lg px-3 py-1.5 disabled:opacity-50 shrink-0"
-              style={{ background: "var(--accent)", color: "#fff" }}
+              style={{ background: "#e5e7eb", color: "#111827" }}
             >
               {searching ? "..." : "Search"}
             </button>
@@ -157,7 +157,7 @@ export function LocationPicker() {
             <button
               onClick={useRealLocation}
               className="text-xs w-full text-center py-1.5 rounded-lg"
-              style={{ color: "var(--accent)" }}
+              style={{ color: "var(--text-secondary)" }}
             >
               Use my real location
             </button>

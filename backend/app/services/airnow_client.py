@@ -44,10 +44,16 @@ async def get_current_aqi(lat: float, lon: float) -> AqiResponse:
         "API_KEY": settings.airnow_api_key,
     }
 
-    async with httpx.AsyncClient(timeout=10) as client:
-        resp = await client.get(_AIRNOW_URL, params=params)
-        resp.raise_for_status()
-        observations = resp.json()
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.get(_AIRNOW_URL, params=params)
+            resp.raise_for_status()
+            observations = resp.json()
+    except httpx.HTTPError:
+        # AirNow being slow/unreachable for a given location shouldn't 500 the
+        # whole endpoint -- fall back to the same clearly-labeled stub used
+        # when no API key is configured, so the UI degrades instead of breaking.
+        return _stub_response()
 
     if not observations:
         result = AqiResponse(aqi=None, pm25=None, category="good", source="airnow")

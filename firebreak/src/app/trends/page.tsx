@@ -57,8 +57,8 @@ export default function TrendsPage() {
             onClick={() => setWindowHours(w.hours)}
             className="text-sm px-3 py-1.5 rounded-full transition-colors"
             style={{
-              background: windowHours === w.hours ? "var(--accent)" : "var(--surface-2)",
-              color: windowHours === w.hours ? "#fff" : "var(--text-secondary)",
+              background: windowHours === w.hours ? "#e5e7eb" : "var(--surface-2)",
+              color: windowHours === w.hours ? "#111827" : "var(--text-secondary)",
               fontWeight: windowHours === w.hours ? 600 : 400,
             }}
           >

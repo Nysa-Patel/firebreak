@@ -119,8 +119,8 @@ export default function AskPage() {
             <div
               className="max-w-[85%] rounded-xl px-4 py-3 text-sm whitespace-pre-line"
               style={{
-                background: m.role === "user" ? "var(--accent)" : "var(--surface-2)",
-                color: m.role === "user" ? "#fff" : "var(--text-primary)",
+                background: m.role === "user" ? "#e5e7eb" : "var(--surface-2)",
+                color: m.role === "user" ? "#111827" : "var(--text-primary)",
               }}
             >
               {m.text}
@@ -175,7 +175,7 @@ export default function AskPage() {
           type="submit"
           disabled={sending || !input.trim()}
           className="text-sm font-medium rounded-full px-5 py-2.5 disabled:opacity-50"
-          style={{ background: "var(--accent)", color: "#fff" }}
+          style={{ background: "#e5e7eb", color: "#111827" }}
         >
           Send
         </button>

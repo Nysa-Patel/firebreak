@@ -156,7 +156,7 @@ export function SymptomChecklistPanel({ profile, aqi, densityClass, onFlagChange
                       checked={checkedIds.includes(item.id)}
                       onChange={(e) => handleToggle(item.id, e.target.checked)}
                       className="size-4 shrink-0"
-                      style={{ accentColor: "var(--accent)" }}
+                      style={{ accentColor: "#6b7280" }}
                     />
                   </label>
                 ))}

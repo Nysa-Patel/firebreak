@@ -171,7 +171,7 @@ export function PhotoClassifier({ lat, lon, onClassified }: Props) {
           onClick={handleShareToMap}
           disabled={status === "submitting"}
           className="text-sm rounded-full px-4 py-2 mt-4 font-medium disabled:opacity-50"
-          style={{ background: "var(--accent)", color: "#fff" }}
+          style={{ background: "#e5e7eb", color: "#111827" }}
         >
           {status === "submitting" ? "Sharing..." : "Share to community map"}
         </button>
