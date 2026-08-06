@@ -1,0 +1,39 @@
+{
+  "expo": {
+    "name": "Firebreak",
+    "slug": "firebreak",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#120b1e",
+    "ios": {
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Firebreak uses your location to show local AQI, smoke reports, and nearby clean-air spaces.",
+        "NSCameraUsageDescription": "Firebreak uses your camera to classify smoke density from a photo of the sky."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#120b1e",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "permissions": ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION", "CAMERA"]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Firebreak uses your location to show local AQI, smoke reports, and nearby clean-air spaces."
+        }
+      ]
+    ]
+  }
+}
