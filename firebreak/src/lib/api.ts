@@ -128,12 +128,21 @@ export function getSubmissionDetail(id: number): Promise<SubmissionDetailOut> {
   return apiFetch(`/api/submissions/${id}`);
 }
 
-export function getCleanAirLocations(
-  lat: number,
-  lon: number,
-  radiusKm = 25
-): Promise<CleanAirLocationOut[]> {
+const CLEAN_AIR_FALLBACK_RADIUS_KM = 200; // the backend's own max -- widest honest search before saying "none nearby"
+
+async function fetchCleanAirLocations(lat: number, lon: number, radiusKm: number): Promise<CleanAirLocationOut[]> {
   return apiFetch(`/api/clean-air-locations?lat=${lat}&lon=${lon}&radius_km=${radiusKm}`);
+}
+
+/** The seed dataset (libraries/community centers from OpenStreetMap) is
+ * nationwide but not uniformly dense -- rural areas can genuinely have
+ * nothing within a tight radius even though they're covered. Widening to
+ * the backend's max radius before giving up avoids a false "no data here"
+ * for locations that just need a bigger search circle. */
+export async function getCleanAirLocations(lat: number, lon: number, radiusKm = 25): Promise<CleanAirLocationOut[]> {
+  const nearby = await fetchCleanAirLocations(lat, lon, radiusKm);
+  if (nearby.length > 0 || radiusKm >= CLEAN_AIR_FALLBACK_RADIUS_KM) return nearby;
+  return fetchCleanAirLocations(lat, lon, CLEAN_AIR_FALLBACK_RADIUS_KM);
 }
 
 export function getTrend(lat: number, lon: number, hours = 6): Promise<TrendResponse> {

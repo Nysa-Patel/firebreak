@@ -14,8 +14,8 @@ export function CleanAirLocations({ locations }: { locations: CleanAirLocationOu
       <div className="card p-5">
         <SectionLabel>Nearby clean-air spaces</SectionLabel>
         <p className="text-sm mt-2" style={{ color: "var(--text-secondary)" }}>
-          No seeded clean-air locations near you yet -- this demo dataset currently only covers the
-          Chico/Butte County, CA area.
+          No libraries or community centers found in our dataset within 200km of this location --
+          real coverage gaps like this can happen in less densely-mapped areas.
         </p>
       </div>
     );
