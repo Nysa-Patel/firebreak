@@ -29,12 +29,27 @@ export function AqiGauge({ aqi, status = "ready" }: Props) {
     );
   }
 
-  if (!aqi || aqi.aqi == null) {
+  if (status === "error" || !aqi) {
     return (
       <div className="card p-5">
         <SectionLabel>Official air quality</SectionLabel>
         <p className="text-sm mt-2" style={{ color: "var(--text-secondary)" }}>
           Couldn&apos;t load AQI data right now.
+        </p>
+      </div>
+    );
+  }
+
+  if (aqi.aqi == null) {
+    // The fetch succeeded -- this isn't a failure, AirNow just has no station
+    // within range here. That's a real monitoring desert, not an error, so
+    // say so plainly instead of showing a generic "couldn't load" message.
+    return (
+      <div className="card p-5">
+        <SectionLabel>Official air quality</SectionLabel>
+        <p className="text-sm mt-2" style={{ color: "var(--text-secondary)" }}>
+          No official AQI station is reporting near this location -- this looks like a monitoring
+          desert. Try the sky photo tool below, or check the coverage map for nearby crowd reports.
         </p>
       </div>
     );
