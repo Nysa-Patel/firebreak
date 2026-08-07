@@ -52,7 +52,7 @@ export function SymptomLogger({ aqi }: { aqi: number | null }) {
   }
 
   return (
-    <div className="card p-5">
+    <div className="p-5">
       <SectionLabel>How are you feeling today?</SectionLabel>
       <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>
         Log a few days and this learns your own symptom threshold from real AQI readings --

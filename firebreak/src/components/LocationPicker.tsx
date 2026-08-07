@@ -84,11 +84,11 @@ export function LocationPicker() {
     <div className="relative ml-auto" ref={containerRef}>
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-full transition-colors"
+        className="flex items-center gap-1.5 text-sm px-2 sm:px-3 py-1.5 rounded-full transition-colors"
         style={{ background: "var(--surface-2)", color: "var(--text-secondary)" }}
       >
         <PinIcon />
-        <span className="max-w-[140px] truncate">{activeLabel ?? "My location"}</span>
+        <span className="max-w-[70px] sm:max-w-[140px] truncate">{activeLabel ?? "My location"}</span>
       </button>
 
       {open && (

@@ -94,11 +94,20 @@ export function Dashboard({ initial }: { initial: InitialDashboardData }) {
 
           <RecommendationCard result={riskResult} />
 
-          <SymptomLogger aqi={aqi?.aqi ?? null} />
-
           <div className="grid sm:grid-cols-2 gap-5">
             <AqiGauge aqi={aqi} status={aqiStatus} />
             <TrendSparkline trend={trend} />
+          </div>
+
+          <div className="card">
+            <SymptomLogger aqi={aqi?.aqi ?? null} />
+            <SymptomChecklistPanel
+              profile={effectiveProfile}
+              aqi={aqi?.aqi ?? null}
+              densityClass={smokeResult?.density_class ?? null}
+              onFlagChange={setSymptomFlagLevel}
+              resetKey={personaKey ?? "self"}
+            />
           </div>
 
           <PhotoClassifier lat={lat} lon={lon} onClassified={setSmokeResult} />
@@ -106,13 +115,6 @@ export function Dashboard({ initial }: { initial: InitialDashboardData }) {
 
         <div className="space-y-5 min-w-0">
           <RiskProfileForm profile={profile} onChange={setProfile} disabled={personaKey != null} />
-          <SymptomChecklistPanel
-            profile={effectiveProfile}
-            aqi={aqi?.aqi ?? null}
-            densityClass={smokeResult?.density_class ?? null}
-            onFlagChange={setSymptomFlagLevel}
-            resetKey={personaKey ?? "self"}
-          />
           <CleanAirLocations locations={locations} />
         </div>
       </div>

@@ -104,7 +104,7 @@ export function SymptomChecklistPanel({ profile, aqi, densityClass, onFlagChange
   if (!checklist) return null;
 
   return (
-    <div className="card p-5">
+    <div className="p-5" style={{ borderTop: "1px solid var(--border)" }}>
       <button
         onClick={() => setExpanded((v) => !v)}
         className="w-full flex items-center justify-between text-left"
