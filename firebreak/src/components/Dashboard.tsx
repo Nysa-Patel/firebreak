@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { getAqi, getCleanAirLocations, getTrend, pingBackend, scoreRisk } from "@/lib/api";
 import { useGeolocation } from "@/lib/useGeolocation";
-import { useRiskProfile } from "@/lib/useRiskProfile";
+import { useFamilyMembers } from "@/lib/useFamilyMembers";
 import { PERSONAS } from "@/lib/personas";
 import { DEMO_REGION } from "@/lib/demoRegion";
 import type {
@@ -21,13 +21,23 @@ import { PhotoClassifier } from "@/components/PhotoClassifier";
 import { RecommendationCard } from "@/components/RecommendationCard";
 import { CleanAirLocations } from "@/components/CleanAirLocations";
 import { TrendSparkline } from "@/components/TrendSparkline";
-import { PersonaToggle } from "@/components/PersonaToggle";
+import { FamilyProfileSwitcher } from "@/components/FamilyProfileSwitcher";
 import { SymptomLogger } from "@/components/SymptomLogger";
 import { SymptomChecklistPanel } from "@/components/SymptomChecklistPanel";
 
 export function Dashboard({ initial }: { initial: InitialDashboardData }) {
   const { lat, lon, error: geoError } = useGeolocation();
-  const { profile, setProfile, loaded: profileLoaded } = useRiskProfile();
+  const {
+    members,
+    activeMember,
+    activeId,
+    setActiveId,
+    addMember,
+    removeMember,
+    renameMember,
+    updateMemberProfile,
+    loaded: profileLoaded,
+  } = useFamilyMembers();
 
   // Seeded with the server-rendered demo-region snapshot (see page.tsx) so
   // the very first paint already has real data instead of a loading state --
@@ -42,7 +52,12 @@ export function Dashboard({ initial }: { initial: InitialDashboardData }) {
   const [personaKey, setPersonaKey] = useState<string | null>(null);
   const [symptomFlagLevel, setSymptomFlagLevel] = useState<SymptomFlagLevel>("none");
 
-  const effectiveProfile = personaKey ? PERSONAS.find((p) => p.key === personaKey)!.profile : profile;
+  const effectiveProfile = personaKey ? PERSONAS.find((p) => p.key === personaKey)!.profile : activeMember.profile;
+
+  function handleSelectMember(id: string) {
+    setPersonaKey(null);
+    setActiveId(id);
+  }
 
   useEffect(() => {
     // Kick the backend awake immediately (Render's free tier sleeps after
@@ -90,7 +105,16 @@ export function Dashboard({ initial }: { initial: InitialDashboardData }) {
 
       <div className="grid lg:grid-cols-[1fr_340px] gap-5 items-start">
         <div className="space-y-5 min-w-0">
-          <PersonaToggle activeKey={personaKey} onSelect={setPersonaKey} />
+          <FamilyProfileSwitcher
+            members={members}
+            activeId={activeId}
+            personaKey={personaKey}
+            onSelectMember={handleSelectMember}
+            onSelectPersona={setPersonaKey}
+            onAddMember={addMember}
+            onRenameMember={renameMember}
+            onRemoveMember={removeMember}
+          />
 
           <RecommendationCard result={riskResult} />
 
@@ -106,7 +130,7 @@ export function Dashboard({ initial }: { initial: InitialDashboardData }) {
               aqi={aqi?.aqi ?? null}
               densityClass={smokeResult?.density_class ?? null}
               onFlagChange={setSymptomFlagLevel}
-              resetKey={personaKey ?? "self"}
+              resetKey={personaKey ?? activeId}
             />
           </div>
 
@@ -114,7 +138,12 @@ export function Dashboard({ initial }: { initial: InitialDashboardData }) {
         </div>
 
         <div className="space-y-5 min-w-0">
-          <RiskProfileForm profile={profile} onChange={setProfile} disabled={personaKey != null} />
+          <RiskProfileForm
+            profile={effectiveProfile}
+            onChange={(p) => updateMemberProfile(activeId, p)}
+            disabled={personaKey != null}
+            memberName={activeMember.name === "Me" ? "Your" : activeMember.name}
+          />
           <CleanAirLocations locations={locations} />
         </div>
       </div>

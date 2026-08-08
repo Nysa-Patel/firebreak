@@ -13,7 +13,7 @@ export interface SymptomChecklistLogEntry {
   density_class: DensityClass | null;
 }
 
-/** Same privacy model as the risk profile (useRiskProfile.ts) -- browser-only,
+/** Same privacy model as the risk profile (useFamilyMembers.ts) -- browser-only,
  * no account, never sent to a server. Kept so a later personalization/trend
  * feature has real exposure+symptom history to work from without this
  * feature itself needing any backend storage of its own. */

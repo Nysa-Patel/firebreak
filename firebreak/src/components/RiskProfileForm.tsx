@@ -7,15 +7,16 @@ interface Props {
   profile: RiskProfile;
   onChange: (profile: RiskProfile) => void;
   disabled?: boolean;
+  memberName?: string;
 }
 
-export function RiskProfileForm({ profile, onChange, disabled = false }: Props) {
+export function RiskProfileForm({ profile, onChange, disabled = false, memberName = "Your" }: Props) {
   return (
     <div className="card p-5" style={{ opacity: disabled ? 0.5 : 1, transition: "opacity 0.3s ease" }}>
-      <SectionLabel>Your risk profile</SectionLabel>
+      <SectionLabel>{memberName === "Your" ? "Your risk profile" : `${memberName}'s risk profile`}</SectionLabel>
       <p className="text-sm mt-1 mb-4" style={{ color: "var(--text-secondary)" }}>
         {disabled
-          ? "Disabled while previewing another persona -- your saved profile isn't being edited."
+          ? "Disabled while previewing a demo persona -- this household profile isn't being edited."
           : "Stored only in this browser -- no account, no server-side profile. Used to personalize the recommendation above."}
       </p>
 
