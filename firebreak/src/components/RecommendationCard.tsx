@@ -4,8 +4,29 @@ import { RISK_LEVEL_COLOR } from "@/lib/display";
 import { RiskDial } from "@/components/RiskDial";
 import type { RiskScoreResponse } from "@/lib/types";
 
-export function RecommendationCard({ result }: { result: RiskScoreResponse | null }) {
+interface Props {
+  result: RiskScoreResponse | null;
+  /** No AirNow station nearby and no sky photo yet -- there's no real signal
+   * to score, so say that plainly instead of showing a loading skeleton
+   * forever or a false "looks fine" reading. */
+  noOfficialData?: boolean;
+}
+
+export function RecommendationCard({ result, noOfficialData = false }: Props) {
   if (!result) {
+    if (noOfficialData) {
+      return (
+        <div className="card p-6">
+          <p className="text-xs font-bold uppercase tracking-wide font-display" style={{ color: "var(--status-warning)" }}>
+            For you, right now
+          </p>
+          <p className="text-[15px] leading-relaxed mt-2">
+            No official AQI station is reporting near this location, so there&apos;s nothing real to score yet --
+            this looks like a monitoring desert. Try the sky photo tool below to get a local reading.
+          </p>
+        </div>
+      );
+    }
     return (
       <div className="card p-6 animate-pulse">
         <div className="h-4 w-32 rounded" style={{ background: "var(--surface-2)" }} />

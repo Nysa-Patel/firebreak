@@ -35,8 +35,12 @@ function defaultMembers(): FamilyMember[] {
   return [{ id: "me", name: "Me", profile }];
 }
 
+// Short on purpose -- this gets appended to the device id (see SymptomLogger)
+// to key each member's symptom logs on the backend, which caps device_id at
+// 64 chars, so a full UUID here would overflow that budget.
 function makeId(): string {
-  return typeof crypto.randomUUID === "function" ? crypto.randomUUID() : `member-${Date.now()}-${Math.random()}`;
+  const uuid = typeof crypto.randomUUID === "function" ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
+  return uuid.replace(/-/g, "").slice(0, 10);
 }
 
 // Household members live only in the browser -- same no-accounts model as

@@ -88,12 +88,21 @@ export function Dashboard({ initial }: { initial: InitialDashboardData }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `aqi` is only read for the seeded-skip check above, not a real dependency
   }, [lat, lon]);
 
+  // No AirNow station nearby and no sky photo submitted -- there is no real
+  // signal to score against, so don't claim a "low risk" reading that would
+  // just be the API's neutral default wearing a confident face.
+  const noOfficialData = aqi != null && aqi.aqi == null && !smokeResult;
+
   useEffect(() => {
     if (!aqi || !profileLoaded) return;
+    if (noOfficialData) {
+      setRiskResult(null);
+      return;
+    }
     scoreRisk(effectiveProfile, aqi.category, smokeResult?.density_class, symptomFlagLevel)
       .then(setRiskResult)
       .catch(() => setRiskResult(null));
-  }, [aqi, effectiveProfile, profileLoaded, smokeResult, symptomFlagLevel]);
+  }, [aqi, effectiveProfile, profileLoaded, smokeResult, symptomFlagLevel, noOfficialData]);
 
   return (
     <main className="max-w-5xl mx-auto w-full px-4 py-8">
@@ -116,7 +125,7 @@ export function Dashboard({ initial }: { initial: InitialDashboardData }) {
             onRemoveMember={removeMember}
           />
 
-          <RecommendationCard result={riskResult} />
+          <RecommendationCard result={riskResult} noOfficialData={noOfficialData} />
 
           <div className="grid sm:grid-cols-2 gap-5">
             <AqiGauge aqi={aqi} status={aqiStatus} />
@@ -124,7 +133,11 @@ export function Dashboard({ initial }: { initial: InitialDashboardData }) {
           </div>
 
           <div className="card">
-            <SymptomLogger aqi={aqi?.aqi ?? null} />
+            <SymptomLogger
+              aqi={aqi?.aqi ?? null}
+              memberId={personaKey ?? activeId}
+              memberName={personaKey ? PERSONAS.find((p) => p.key === personaKey)!.label : activeMember.name}
+            />
             <SymptomChecklistPanel
               profile={effectiveProfile}
               aqi={aqi?.aqi ?? null}

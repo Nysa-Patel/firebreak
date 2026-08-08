@@ -36,7 +36,7 @@ _SYMPTOM_ESCALATION: dict[SymptomFlagLevel, int] = {
 
 _AQI_LEVEL_INDEX: dict[AqiCategory, int] = {
     "good": 0,
-    "moderate": 0,
+    "moderate": 1,
     "unhealthy_sensitive": 1,
     "unhealthy": 2,
     "very_unhealthy": 3,
