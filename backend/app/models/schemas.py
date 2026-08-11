@@ -15,7 +15,7 @@ class AqiResponse(BaseModel):
     aqi: Optional[int]
     pm25: Optional[float]
     category: AqiCategory
-    source: Literal["airnow", "stub"]
+    source: Literal["airnow", "stub", "unavailable"]
     station_distance_km: Optional[float] = None
     observed_at: Optional[dt.datetime] = None
 

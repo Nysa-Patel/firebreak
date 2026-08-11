@@ -88,21 +88,28 @@ export function Dashboard({ initial }: { initial: InitialDashboardData }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `aqi` is only read for the seeded-skip check above, not a real dependency
   }, [lat, lon]);
 
-  // No AirNow station nearby and no sky photo submitted -- there is no real
+  // No official AQI reading and no sky photo submitted -- there is no real
   // signal to score against, so don't claim a "low risk" reading that would
-  // just be the API's neutral default wearing a confident face.
-  const noOfficialData = aqi != null && aqi.aqi == null && !smokeResult;
+  // just be the API's neutral default wearing a confident face. Distinguish
+  // a real coverage gap (no station nearby) from AirNow just failing to
+  // answer this one call, since those need different messages.
+  const noDataReason =
+    aqi != null && aqi.aqi == null && !smokeResult
+      ? aqi.source === "unavailable"
+        ? "unavailable"
+        : "monitoring_desert"
+      : undefined;
 
   useEffect(() => {
     if (!aqi || !profileLoaded) return;
-    if (noOfficialData) {
+    if (noDataReason) {
       setRiskResult(null);
       return;
     }
     scoreRisk(effectiveProfile, aqi.category, smokeResult?.density_class, symptomFlagLevel)
       .then(setRiskResult)
       .catch(() => setRiskResult(null));
-  }, [aqi, effectiveProfile, profileLoaded, smokeResult, symptomFlagLevel, noOfficialData]);
+  }, [aqi, effectiveProfile, profileLoaded, smokeResult, symptomFlagLevel, noDataReason]);
 
   return (
     <main className="max-w-5xl mx-auto w-full px-4 py-8">
@@ -125,7 +132,7 @@ export function Dashboard({ initial }: { initial: InitialDashboardData }) {
             onRemoveMember={removeMember}
           />
 
-          <RecommendationCard result={riskResult} noOfficialData={noOfficialData} />
+          <RecommendationCard result={riskResult} noDataReason={noDataReason} />
 
           <div className="grid sm:grid-cols-2 gap-5">
             <AqiGauge aqi={aqi} status={aqiStatus} />

@@ -27,6 +27,18 @@ def _stub_response() -> AqiResponse:
     )
 
 
+def _unavailable_response() -> AqiResponse:
+    # Distinct from _stub_response(): this is a real integration that failed
+    # this one time (timeout/rate-limit/AirNow outage), not a demo running
+    # without a key. Returning a fake-but-plausible AQI number here would
+    # tell the risk engine (and the user) something we don't actually know --
+    # aqi=None keeps it honest and lets the frontend say "temporarily
+    # unavailable" instead of either a fabricated reading or "no coverage
+    # here", which would be the wrong claim for a place that does have a
+    # station, just not reachable this instant.
+    return AqiResponse(aqi=None, pm25=None, category="good", source="unavailable")
+
+
 async def get_current_aqi(lat: float, lon: float) -> AqiResponse:
     if not settings.airnow_api_key:
         return _stub_response()
@@ -51,9 +63,9 @@ async def get_current_aqi(lat: float, lon: float) -> AqiResponse:
             observations = resp.json()
     except httpx.HTTPError:
         # AirNow being slow/unreachable for a given location shouldn't 500 the
-        # whole endpoint -- fall back to the same clearly-labeled stub used
-        # when no API key is configured, so the UI degrades instead of breaking.
-        return _stub_response()
+        # whole endpoint, but it also shouldn't quietly hand back a fabricated
+        # reading -- say plainly that this attempt failed instead.
+        return _unavailable_response()
 
     if not observations:
         result = AqiResponse(aqi=None, pm25=None, category="good", source="airnow")

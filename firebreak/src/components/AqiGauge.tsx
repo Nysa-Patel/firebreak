@@ -40,6 +40,22 @@ export function AqiGauge({ aqi, status = "ready" }: Props) {
     );
   }
 
+  if (aqi.aqi == null && aqi.source === "unavailable") {
+    // Distinct from the monitoring-desert case below: AirNow has a real
+    // integration here, this one call to it just failed (timeout/rate-limit/
+    // outage). Saying "monitoring desert" would wrongly imply there's no
+    // coverage at all, so this gets its own, temporary-sounding message.
+    return (
+      <div className="card p-5">
+        <SectionLabel>Official air quality</SectionLabel>
+        <p className="text-sm mt-2" style={{ color: "var(--text-secondary)" }}>
+          Couldn&apos;t reach AirNow for this location just now -- this is a temporary hiccup, not a
+          coverage gap. Try refreshing in a moment, or use the sky photo tool below for a local reading.
+        </p>
+      </div>
+    );
+  }
+
   if (aqi.aqi == null) {
     // The fetch succeeded -- this isn't a failure, AirNow just has no station
     // within range here. That's a real monitoring desert, not an error, so

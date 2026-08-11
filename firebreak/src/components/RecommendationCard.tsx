@@ -6,24 +6,32 @@ import type { RiskScoreResponse } from "@/lib/types";
 
 interface Props {
   result: RiskScoreResponse | null;
-  /** No AirNow station nearby and no sky photo yet -- there's no real signal
-   * to score, so say that plainly instead of showing a loading skeleton
-   * forever or a false "looks fine" reading. */
-  noOfficialData?: boolean;
+  /** No official AQI to score against and no sky photo yet, so there's
+   * nothing real to base a recommendation on -- say that plainly instead of
+   * showing a loading skeleton forever or a false "looks fine" reading.
+   * "monitoring_desert" = no AirNow station in range here; "unavailable" =
+   * AirNow has a station here, this one call to it just failed. */
+  noDataReason?: "monitoring_desert" | "unavailable";
 }
 
-export function RecommendationCard({ result, noOfficialData = false }: Props) {
+const NO_DATA_COPY: Record<"monitoring_desert" | "unavailable", string> = {
+  monitoring_desert:
+    "No official AQI station is reporting near this location, so there's nothing real to score yet -- " +
+    "this looks like a monitoring desert. Try the sky photo tool below to get a local reading.",
+  unavailable:
+    "Couldn't reach AirNow for this location just now, so there's nothing real to score yet -- this is a " +
+    "temporary hiccup, not a coverage gap. Try refreshing in a moment, or use the sky photo tool below.",
+};
+
+export function RecommendationCard({ result, noDataReason }: Props) {
   if (!result) {
-    if (noOfficialData) {
+    if (noDataReason) {
       return (
         <div className="card p-6">
           <p className="text-xs font-bold uppercase tracking-wide font-display" style={{ color: "var(--status-warning)" }}>
             For you, right now
           </p>
-          <p className="text-[15px] leading-relaxed mt-2">
-            No official AQI station is reporting near this location, so there&apos;s nothing real to score yet --
-            this looks like a monitoring desert. Try the sky photo tool below to get a local reading.
-          </p>
+          <p className="text-[15px] leading-relaxed mt-2">{NO_DATA_COPY[noDataReason]}</p>
         </div>
       );
     }

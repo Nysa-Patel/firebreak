@@ -12,7 +12,7 @@ export interface AqiResponse {
   aqi: number | null;
   pm25: number | null;
   category: AqiCategory;
-  source: "airnow" | "stub";
+  source: "airnow" | "stub" | "unavailable";
   station_distance_km: number | null;
   observed_at: string | null;
 }
