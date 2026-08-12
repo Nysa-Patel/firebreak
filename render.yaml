@@ -1,0 +1,41 @@
+# Infrastructure-as-code reference for the backend's Postgres database.
+#
+# Why this file exists: the backend defaults to a local SQLite file
+# (backend/app/config.py) unless DATABASE_URL points at Postgres instead.
+# Render's free-tier web services get a fresh filesystem on every deploy --
+# no persistent disk -- so that SQLite file resets to empty on every push,
+# and AqiReading history (the Trends tab's only data source) can never
+# accumulate across deploys.
+#
+# This file documents the intended production config; it does NOT
+# automatically attach to the existing backend service just by being in the
+# repo. See README-DATABASE.md at the repo root for the actual manual steps
+# (2 minutes, no code/redeploy of this file required) -- that's the safe
+# path, since it doesn't touch the already-working backend service or its
+# wildfire-exporisk-app.onrender.com domain. Only use "New Blueprint" on
+# this file if deliberately setting up a fresh environment from scratch.
+
+databases:
+  - name: firebreak-db
+    plan: free
+    databaseName: firebreak
+    user: firebreak
+
+services:
+  - type: web
+    name: firebreak-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: firebreak-db
+          property: connectionString
+      - key: AIRNOW_API_KEY
+        sync: false
+      - key: NOAA_API_KEY
+        sync: false
+      - key: ENVIRONMENT
+        value: production
