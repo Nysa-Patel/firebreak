@@ -16,7 +16,7 @@ app = FastAPI(
     title="Firebreak API",
     description="Personal wildfire smoke risk scoring combining CV smoke-density estimation, "
     "live AQI data, and crowd-sourced coverage of monitoring deserts.",
-    version="0.1.0",
+    version="0.1.1",  # bumped to force a fresh deploy while verifying DATABASE_URL persistence
 )
 
 app.add_middleware(
