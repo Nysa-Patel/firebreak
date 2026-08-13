@@ -1,6 +1,6 @@
 import { StatusBar } from "expo-status-bar";
 import { useRef, useState } from "react";
-import { ActivityIndicator, Platform, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Image, Platform, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import WebView from "react-native-webview";
 
@@ -10,9 +10,25 @@ import WebView from "react-native-webview";
 // app already built and deployed at this URL, not reimplemented here.
 const APP_URL = "https://firebreak-beta.vercel.app";
 
+function WelcomeScreen({ onEnter }: { onEnter: () => void }) {
+  return (
+    <View style={styles.welcome}>
+      <View style={styles.welcomeCenter}>
+        <Image source={require("./assets/icon.png")} style={styles.logo} />
+        <Text style={styles.title}>Firebreak</Text>
+        <Text style={styles.tagline}>Know your wildfire smoke risk, right now.</Text>
+      </View>
+      <TouchableOpacity style={styles.enterButton} onPress={onEnter}>
+        <Text style={styles.enterText}>Get started</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
 export default function App() {
   const webviewRef = useRef<WebView>(null);
   const [hasError, setHasError] = useState(false);
+  const [entered, setEntered] = useState(false);
 
   function retry() {
     setHasError(false);
@@ -23,7 +39,9 @@ export default function App() {
     <SafeAreaProvider>
       <SafeAreaView style={styles.container}>
         <StatusBar style="light" />
-        {hasError ? (
+        {!entered ? (
+          <WelcomeScreen onEnter={() => setEntered(true)} />
+        ) : hasError ? (
           <View style={styles.center}>
             <Text style={styles.errorText}>Couldn&apos;t reach Firebreak. Check your connection and try again.</Text>
             <TouchableOpacity style={styles.retryButton} onPress={retry}>
@@ -86,5 +104,47 @@ const styles = StyleSheet.create({
   retryText: {
     color: "#111827",
     fontWeight: "600",
+  },
+  welcome: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 64,
+    paddingHorizontal: 32,
+  },
+  welcomeCenter: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  logo: {
+    width: 112,
+    height: 112,
+    borderRadius: 28,
+    marginBottom: 24,
+  },
+  title: {
+    color: "#fdf6ff",
+    fontSize: 34,
+    fontWeight: "800",
+    marginBottom: 10,
+  },
+  tagline: {
+    color: "#c9b8dd",
+    fontSize: 16,
+    textAlign: "center",
+    lineHeight: 22,
+  },
+  enterButton: {
+    alignSelf: "stretch",
+    backgroundColor: "#f97316",
+    paddingVertical: 16,
+    borderRadius: 999,
+    alignItems: "center",
+  },
+  enterText: {
+    color: "#fdf6ff",
+    fontSize: 17,
+    fontWeight: "700",
   },
 });
