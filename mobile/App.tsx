@@ -1,6 +1,7 @@
 import { StatusBar } from "expo-status-bar";
 import { useRef, useState } from "react";
-import { ActivityIndicator, Platform, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Platform, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import WebView from "react-native-webview";
 
 // The deployed Firebreak web app -- this wrapper's only job is to load it
@@ -19,38 +20,40 @@ export default function App() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar style="light" />
-      {hasError ? (
-        <View style={styles.center}>
-          <Text style={styles.errorText}>Couldn&apos;t reach Firebreak. Check your connection and try again.</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={retry}>
-            <Text style={styles.retryText}>Retry</Text>
-          </TouchableOpacity>
-        </View>
-      ) : (
-        <WebView
-          ref={webviewRef}
-          source={{ uri: APP_URL }}
-          style={styles.webview}
-          startInLoadingState
-          renderLoading={() => (
-            <View style={styles.center}>
-              <ActivityIndicator size="large" color="#ff2e93" />
-            </View>
-          )}
-          onError={() => setHasError(true)}
-          onHttpError={() => setHasError(true)}
-          // Sky-photo upload uses a file input with capture="environment" and
-          // the dashboard/map use browser geolocation -- both need these on.
-          geolocationEnabled
-          allowsInlineMediaPlayback
-          mediaPlaybackRequiresUserAction={false}
-          pullToRefreshEnabled={Platform.OS === "android"}
-          originWhitelist={["https://*"]}
-        />
-      )}
-    </SafeAreaView>
+    <SafeAreaProvider>
+      <SafeAreaView style={styles.container}>
+        <StatusBar style="light" />
+        {hasError ? (
+          <View style={styles.center}>
+            <Text style={styles.errorText}>Couldn&apos;t reach Firebreak. Check your connection and try again.</Text>
+            <TouchableOpacity style={styles.retryButton} onPress={retry}>
+              <Text style={styles.retryText}>Retry</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <WebView
+            ref={webviewRef}
+            source={{ uri: APP_URL }}
+            style={styles.webview}
+            startInLoadingState
+            renderLoading={() => (
+              <View style={styles.center}>
+                <ActivityIndicator size="large" color="#ff2e93" />
+              </View>
+            )}
+            onError={() => setHasError(true)}
+            onHttpError={() => setHasError(true)}
+            // Sky-photo upload uses a file input with capture="environment" and
+            // the dashboard/map use browser geolocation -- both need these on.
+            geolocationEnabled
+            allowsInlineMediaPlayback
+            mediaPlaybackRequiresUserAction={false}
+            pullToRefreshEnabled={Platform.OS === "android"}
+            originWhitelist={["https://*"]}
+          />
+        )}
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
 

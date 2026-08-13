@@ -20,6 +20,7 @@ const NAV_LINKS = [
   { href: "/map", label: "Coverage map" },
   { href: "/trends", label: "Trends" },
   { href: "/ask", label: "Ask" },
+  { href: "/about", label: "About" },
 ];
 
 export function Header() {

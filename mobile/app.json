@@ -12,7 +12,8 @@
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Firebreak uses your location to show local AQI, smoke reports, and nearby clean-air spaces.",
         "NSCameraUsageDescription": "Firebreak uses your camera to classify smoke density from a photo of the sky."
-      }
+      },
+      "bundleIdentifier": "com.anonymous.firebreak"
     },
     "android": {
       "adaptiveIcon": {
@@ -22,7 +23,13 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "permissions": ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION", "CAMERA"]
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "CAMERA",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"

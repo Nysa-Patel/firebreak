@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "claudecache": {
+      "command": "npx",
+      "args": [
+        "claudecached",
+        "mcp"
+      ]
+    }
+  }
+}

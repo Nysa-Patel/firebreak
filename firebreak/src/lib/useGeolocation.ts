@@ -49,7 +49,7 @@ export function useGeolocation() {
             label: "Chico, CA (demo)",
           });
         },
-        { timeout: 8000 }
+        { timeout: 8000, maximumAge: 0, enableHighAccuracy: true }
       );
     }
 
