@@ -1,11 +1,13 @@
 from fastapi import APIRouter
 
 from app.models.schemas import (
+    PatternMatchResponse,
     SymptomChecklistItem,
     SymptomChecklistResponse,
     SymptomFlagRequest,
     SymptomFlagResponse,
 )
+from app.services.symptom_pattern_match import match_pattern
 from app.services.symptom_rules import CHECKLISTS, DISCLAIMER, evaluate_symptoms
 
 router = APIRouter(prefix="/api", tags=["symptom-flag"])
@@ -25,6 +27,7 @@ async def symptom_checklist() -> SymptomChecklistResponse:
 @router.post("/symptom-flag", response_model=SymptomFlagResponse)
 async def symptom_flag(payload: SymptomFlagRequest) -> SymptomFlagResponse:
     assessment = evaluate_symptoms(payload.checked_symptom_ids)
+    pattern = match_pattern(payload.checked_symptom_ids)
     return SymptomFlagResponse(
         level=assessment.level,
         message=assessment.message,
@@ -32,4 +35,11 @@ async def symptom_flag(payload: SymptomFlagRequest) -> SymptomFlagResponse:
         matched_moderate=assessment.matched_moderate,
         matched_mild=assessment.matched_mild,
         disclaimer=DISCLAIMER,
+        pattern_match=PatternMatchResponse(
+            matched=pattern.matched,
+            pattern=pattern.pattern,
+            score=pattern.score,
+            matched_symptoms=pattern.matched_symptoms,
+            reason=pattern.reason,
+        ),
     )

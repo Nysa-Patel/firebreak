@@ -69,6 +69,18 @@ export default function AboutPage() {
         </p>
       </Section>
 
+      <Section title="Symptom pattern match">
+        <p>
+          Real, but a rule table not a model: a second, independent pass over the same four
+          checklist buckets from the symptom-flagging engine, scoring which bucket&apos;s symptom
+          profile the checked-off symptoms resemble most closely (critical symptoms weighted 2x,
+          everything else 1x). It only reports a match above a 40% weighted-overlap threshold and
+          with at least two symptoms checked -- otherwise it says so honestly rather than forcing
+          a result from thin signal. Purely educational context, shown separately from the
+          urgency flag, which stays the one thing this feature treats as a safety signal.
+        </p>
+      </Section>
+
       <Section title="Short-term trend & forecast">
         <p>
           Holt&apos;s linear trend method (double exponential smoothing) over recently logged AQI

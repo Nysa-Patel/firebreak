@@ -38,6 +38,20 @@ const LEVEL_COLOR: Record<SymptomFlagLevel, string> = {
   emergency: "var(--status-critical)",
 };
 
+// Small neutral tag marking a feature as a fixed rule table rather than a
+// trained model -- deliberately unobtrusive (no accent/status color) since
+// it's a provenance label, not a severity signal.
+function RuleTag() {
+  return (
+    <span
+      className="text-xs px-2 py-0.5 rounded-full shrink-0"
+      style={{ background: "var(--surface-2)", color: "var(--text-muted)", fontWeight: 600 }}
+    >
+      Rule-based
+    </span>
+  );
+}
+
 function activeConditionsFor(profile: RiskProfile): ConditionBucket[] {
   const buckets: ConditionBucket[] = ["general"];
   if (profile.has_respiratory_condition) buckets.push("asthma_copd");
@@ -175,6 +189,44 @@ export function SymptomChecklistPanel({ profile, aqi, densityClass, onFlagChange
             >
               {flagResult.message}
             </p>
+          )}
+
+          {flagResult && (
+            <div className="rounded-lg px-4 py-3 space-y-2" style={{ border: "1px solid var(--border)" }}>
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-semibold">Symptom Pattern Match — Educational</p>
+                <RuleTag />
+              </div>
+
+              {flagResult.pattern_match.matched ? (
+                <>
+                  <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
+                    Closest resemblance: <strong>{BUCKET_LABEL[flagResult.pattern_match.pattern!]}</strong>{" "}
+                    ({flagResult.pattern_match.score}% overlap)
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {flagResult.pattern_match.matched_symptoms.map((label) => (
+                      <span
+                        key={label}
+                        className="text-xs px-2 py-0.5 rounded-full"
+                        style={{ background: "var(--surface-2)", color: "var(--text-secondary)" }}
+                      >
+                        {label}
+                      </span>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+                  No clear pattern -- {flagResult.pattern_match.reason}
+                </p>
+              )}
+
+              <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                This is a pattern comparison, not a diagnosis. If you&apos;re concerned about your
+                symptoms, talk to a healthcare provider.
+              </p>
+            </div>
           )}
         </div>
       )}

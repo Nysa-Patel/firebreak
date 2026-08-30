@@ -54,6 +54,14 @@ export interface SymptomChecklistResponse {
   disclaimer: string;
 }
 
+export interface PatternMatchResult {
+  matched: boolean;
+  pattern: ConditionBucket | null;
+  score: number | null;
+  matched_symptoms: string[];
+  reason: string;
+}
+
 export interface SymptomFlagResponse {
   level: SymptomFlagLevel;
   message: string;
@@ -61,6 +69,7 @@ export interface SymptomFlagResponse {
   matched_moderate: string[];
   matched_mild: string[];
   disclaimer: string;
+  pattern_match: PatternMatchResult;
 }
 
 export interface SubmissionOut {

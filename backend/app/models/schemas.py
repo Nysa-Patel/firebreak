@@ -153,6 +153,14 @@ class SymptomFlagRequest(BaseModel):
     checked_symptom_ids: list[str] = []
 
 
+class PatternMatchResponse(BaseModel):
+    matched: bool
+    pattern: Optional[ConditionBucket] = None
+    score: Optional[float] = None
+    matched_symptoms: list[str]
+    reason: str
+
+
 class SymptomFlagResponse(BaseModel):
     level: SymptomFlagLevel
     message: str
@@ -160,6 +168,7 @@ class SymptomFlagResponse(BaseModel):
     matched_moderate: list[str]
     matched_mild: list[str]
     disclaimer: str
+    pattern_match: PatternMatchResponse
 
 
 class AskContext(BaseModel):
