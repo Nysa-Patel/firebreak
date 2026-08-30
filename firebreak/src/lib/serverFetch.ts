@@ -1,4 +1,4 @@
-import type { AqiResponse, CleanAirLocationOut, TrendResponse } from "./types";
+import type { AqiResponse } from "./types";
 import { DEMO_REGION } from "./demoRegion";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
@@ -26,8 +26,6 @@ async function serverFetch<T>(path: string): Promise<T | null> {
 
 export interface InitialDashboardData {
   aqi: AqiResponse | null;
-  locations: CleanAirLocationOut[];
-  trend: TrendResponse | null;
 }
 
 /** Best-effort server-side snapshot of the demo region, used only to seed
@@ -36,10 +34,6 @@ export interface InitialDashboardData {
  * runs anyway) carries the full load, same as before this existed. */
 export async function fetchInitialDashboardData(): Promise<InitialDashboardData> {
   const { lat, lon } = DEMO_REGION;
-  const [aqi, locations, trend] = await Promise.all([
-    serverFetch<AqiResponse>(`/api/aqi?lat=${lat}&lon=${lon}`),
-    serverFetch<CleanAirLocationOut[]>(`/api/clean-air-locations?lat=${lat}&lon=${lon}`),
-    serverFetch<TrendResponse>(`/api/trend?lat=${lat}&lon=${lon}`),
-  ]);
-  return { aqi, locations: locations ?? [], trend };
+  const aqi = await serverFetch<AqiResponse>(`/api/aqi?lat=${lat}&lon=${lon}`);
+  return { aqi };
 }

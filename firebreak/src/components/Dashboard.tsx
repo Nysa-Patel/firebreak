@@ -1,26 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getAqi, getCleanAirLocations, getTrend, pingBackend, scoreRisk } from "@/lib/api";
+import { getAqi, pingBackend, scoreRisk } from "@/lib/api";
 import { useGeolocation } from "@/lib/useGeolocation";
 import { useFamilyMembers } from "@/lib/useFamilyMembers";
 import { PERSONAS } from "@/lib/personas";
 import { DEMO_REGION } from "@/lib/demoRegion";
-import type {
-  AqiResponse,
-  CleanAirLocationOut,
-  ClassifySmokeResponse,
-  RiskScoreResponse,
-  SymptomFlagLevel,
-  TrendResponse,
-} from "@/lib/types";
+import type { AqiResponse, ClassifySmokeResponse, RiskScoreResponse, SymptomFlagLevel } from "@/lib/types";
 import type { InitialDashboardData } from "@/lib/serverFetch";
 import { RiskProfileForm } from "@/components/RiskProfileForm";
 import { AqiGauge } from "@/components/AqiGauge";
 import { PhotoClassifier } from "@/components/PhotoClassifier";
 import { RecommendationCard } from "@/components/RecommendationCard";
-import { CleanAirLocations } from "@/components/CleanAirLocations";
-import { TrendSparkline } from "@/components/TrendSparkline";
 import { FamilyProfileSwitcher } from "@/components/FamilyProfileSwitcher";
 import { SymptomLogger } from "@/components/SymptomLogger";
 import { SymptomChecklistPanel } from "@/components/SymptomChecklistPanel";
@@ -47,8 +38,6 @@ export function Dashboard({ initial }: { initial: InitialDashboardData }) {
   const [aqiStatus, setAqiStatus] = useState<"loading" | "ready" | "error">(initial.aqi ? "ready" : "loading");
   const [smokeResult, setSmokeResult] = useState<ClassifySmokeResponse | null>(null);
   const [riskResult, setRiskResult] = useState<RiskScoreResponse | null>(null);
-  const [locations, setLocations] = useState<CleanAirLocationOut[]>(initial.locations);
-  const [trend, setTrend] = useState<TrendResponse | null>(initial.trend);
   const [personaKey, setPersonaKey] = useState<string | null>(null);
   const [symptomFlagLevel, setSymptomFlagLevel] = useState<SymptomFlagLevel>("none");
 
@@ -83,8 +72,6 @@ export function Dashboard({ initial }: { initial: InitialDashboardData }) {
         setAqi(null);
         setAqiStatus("error");
       });
-    getCleanAirLocations(lat, lon).then(setLocations).catch(() => setLocations([]));
-    getTrend(lat, lon).then(setTrend).catch(() => setTrend(null));
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `aqi` is only read for the seeded-skip check above, not a real dependency
   }, [lat, lon]);
 
@@ -134,10 +121,7 @@ export function Dashboard({ initial }: { initial: InitialDashboardData }) {
 
           <RecommendationCard result={riskResult} noDataReason={noDataReason} />
 
-          <div className="grid sm:grid-cols-2 gap-5">
-            <AqiGauge aqi={aqi} status={aqiStatus} />
-            <TrendSparkline trend={trend} />
-          </div>
+          <AqiGauge aqi={aqi} status={aqiStatus} />
 
           <div className="card">
             <SymptomLogger
@@ -164,7 +148,6 @@ export function Dashboard({ initial }: { initial: InitialDashboardData }) {
             disabled={personaKey != null}
             memberName={activeMember.name === "Me" ? "Your" : activeMember.name}
           />
-          <CleanAirLocations locations={locations} />
         </div>
       </div>
     </main>
