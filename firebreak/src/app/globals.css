@@ -78,3 +78,15 @@ h1, h2, h3 {
   transform: translateY(-2px);
   box-shadow: 0 10px 30px -8px rgba(0, 0, 0, 0.35);
 }
+
+/* iOS Safari auto-zooms into any text input styled below 16px, and it's
+   awkward to zoom back out of. Forcing 16px here (outside Tailwind's utility
+   layer, so it wins over classes like text-sm) stops that for every current
+   and future input/select/textarea, instead of patching font sizes one
+   component at a time. Checkboxes/radios aren't affected by this iOS
+   behavior, so they're excluded. */
+input:not([type="checkbox"]):not([type="radio"]),
+select,
+textarea {
+  font-size: 16px;
+}
