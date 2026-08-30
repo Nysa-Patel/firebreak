@@ -107,7 +107,7 @@ export function Dashboard({ initial }: { initial: InitialDashboardData }) {
       )}
 
       <div className="grid lg:grid-cols-[1fr_340px] gap-5 items-start">
-        <div className="space-y-5 min-w-0">
+        <div className="space-y-5 min-w-0 order-2 lg:order-1">
           <FamilyProfileSwitcher
             members={members}
             activeId={activeId}
@@ -141,7 +141,7 @@ export function Dashboard({ initial }: { initial: InitialDashboardData }) {
           <PhotoClassifier lat={lat} lon={lon} onClassified={setSmokeResult} />
         </div>
 
-        <div className="space-y-5 min-w-0">
+        <div className="space-y-5 min-w-0 order-1 lg:order-2">
           <RiskProfileForm
             profile={effectiveProfile}
             onChange={(p) => updateMemberProfile(activeId, p)}

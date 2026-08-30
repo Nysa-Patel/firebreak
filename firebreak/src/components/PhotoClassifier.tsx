@@ -88,7 +88,9 @@ export function PhotoClassifier({ lat, lon, onClassified }: Props) {
           <input
             type="file"
             accept="image/*"
-            capture="environment"
+            // No `capture` attribute -- that forces mobile browsers straight to the
+            // camera, skipping the native picker's "Photo Library"/"Choose File"
+            // options. Leaving it off lets the OS show the full chooser instead.
             onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
             className="hidden"
           />
