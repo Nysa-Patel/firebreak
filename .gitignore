@@ -33,3 +33,7 @@ backend/ml_pipeline/spot_check_sample.txt
 # OS
 .DS_Store
 .claudecache/
+
+# Local AI-assistant tooling config -- not part of the app, not needed to run or judge it.
+.claude/
+CLAUDE.md
