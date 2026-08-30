@@ -35,8 +35,16 @@ def run_migrations() -> None:
                 conn.execute(text("ALTER TABLE submissions ADD COLUMN photo_base64 TEXT"))
             except OperationalError:
                 pass  # column already exists -- sqlite has no IF NOT EXISTS for ADD COLUMN
+            try:
+                conn.execute(text("ALTER TABLE submissions ADD COLUMN exif_gps_distance_km FLOAT"))
+            except OperationalError:
+                pass
         else:
             try:
                 conn.execute(text("ALTER TABLE submissions ADD COLUMN IF NOT EXISTS photo_base64 TEXT"))
+            except ProgrammingError:
+                pass
+            try:
+                conn.execute(text("ALTER TABLE submissions ADD COLUMN IF NOT EXISTS exif_gps_distance_km FLOAT"))
             except ProgrammingError:
                 pass

@@ -29,6 +29,11 @@ class Submission(Base):
     client_captured_at: Mapped[dt.datetime] = mapped_column(DateTime)
     created_at: Mapped[dt.datetime] = mapped_column(DateTime, default=dt.datetime.utcnow)
     photo_base64: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Distance between the photo's EXIF GPS (if present) and the submitted
+    # location -- null when the photo had no EXIF GPS at all, not when the
+    # locations agreed. Kept for the same reason duplicate_flag_count is:
+    # transparency into what fed the trust score, not just the final number.
+    exif_gps_distance_km: Mapped[float | None] = mapped_column(Float, nullable=True)
 
 
 class AqiReading(Base):

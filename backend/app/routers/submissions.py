@@ -11,6 +11,7 @@ from app.ml.inference import classify_smoke_bytes
 from app.models.db_models import Submission
 from app.models.schemas import SubmissionDetailOut, SubmissionOut
 from app.services import geohash_utils
+from app.services.exif_location_check import check_exif_location
 from app.services.phash_utils import compute_phash_bytes, is_near_duplicate
 from app.services.photo_retention import purge_expired_photos
 
@@ -88,10 +89,11 @@ async def create_submission(
     duplicate_flag_count = sum(1 for s in recent_same_cell if is_near_duplicate(phash, s.phash))
 
     classification = classify_smoke_bytes(raw)
+    exif_check = check_exif_location(raw, lat, lon)
 
     freshness = max(0.0, 1 - age_minutes / settings.submission_max_age_minutes)
     duplicate_penalty = 1 / (1 + duplicate_flag_count)
-    trust_score = round(classification.confidence * freshness * duplicate_penalty, 3)
+    trust_score = round(classification.confidence * freshness * duplicate_penalty * exif_check.penalty, 3)
 
     submission = Submission(
         geohash=geohash,
@@ -100,6 +102,7 @@ async def create_submission(
         trust_score=trust_score,
         phash=phash,
         duplicate_flag_count=duplicate_flag_count,
+        exif_gps_distance_km=exif_check.distance_km,
         client_captured_at=captured_at,
         # Kept only for settings.photo_retention_hours -- see photo_retention.py.
         photo_base64=base64.b64encode(raw).decode("ascii"),
