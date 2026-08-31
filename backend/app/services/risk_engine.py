@@ -1,11 +1,12 @@
 """Rule-based personal risk engine.
 
-Deliberately a transparent decision table, not a model: combining a small
-number of well-understood risk factors (age, respiratory condition,
-pregnancy, outdoor occupation) with air-quality signals is easy to audit and
-explain to judges/users, and there's no training signal that would justify an
-ML model here. The CV model's job is upstream of this (estimating local smoke
-density from a photo) -- this engine just turns that + AQI into a decision.
+This is a plain decision table on purpose, not a model. A handful of
+well-understood risk factors (age, respiratory condition, pregnancy,
+outdoor occupation) combined with the air quality signal is something
+anyone can audit line by line, and there's no real training signal that
+would justify swapping in ML here anyway. The CV model handles the harder
+problem upstream (reading smoke density from a photo); this file just
+turns that plus AQI into an actual decision.
 """
 
 from app.models.schemas import (
@@ -20,12 +21,10 @@ from app.services.symptom_rules import MESSAGES as SYMPTOM_MESSAGES
 
 _LEVELS = ["low", "moderate", "high", "very_high"]
 
-# Symptom flags (app.services.symptom_rules) extend this output rather than
-# replace it: they only ever push the level up, never down. "emergency" uses
-# an escalation of len(_LEVELS) specifically so it forces the ceiling
-# (very_high) regardless of what AQI/profile alone would have produced --
-# a reported emergency warning sign overrides the ambient-conditions read,
-# it doesn't average with it.
+# Symptom flags from symptom_rules.py add to this score, they don't replace
+# it, and only ever push the level up. "emergency" jumps by len(_LEVELS) so
+# it always forces the ceiling no matter what AQI/profile alone computed.
+# A real emergency sign overrides the ambient read; it doesn't average with it.
 _SYMPTOM_ESCALATION: dict[SymptomFlagLevel, int] = {
     "none": 0,
     "mild": 0,
@@ -88,8 +87,8 @@ def score_risk(request: RiskScoreRequest) -> RiskScoreResponse:
         sensitive_factor_count += 1
         factors.append("outdoor occupation (higher cumulative exposure)")
 
-    # Escalate at most one level per sensitive factor present, but never
-    # silently escalate past "very_high" -- that's already the ceiling.
+    # One level per sensitive factor, capped so we never escalate past
+    # "very_high" (already the ceiling, nowhere left to go).
     escalation = min(sensitive_factor_count, len(_LEVELS) - 1 - base_index)
     final_index = base_index + max(escalation, 0)
 
@@ -102,8 +101,8 @@ def score_risk(request: RiskScoreRequest) -> RiskScoreResponse:
         recommendation += " Because of your profile (" + ", ".join(factors[-sensitive_factor_count:]) + "), consider extra caution even at this level."
 
     if request.symptom_level in ("emergency", "urgent"):
-        # Lead with the safety message -- this is the most important thing to
-        # read, not an addendum to the AQI-based text.
+        # This goes first. It's the most important line on the screen, not
+        # a footnote tacked onto the AQI text.
         recommendation = SYMPTOM_MESSAGES[request.symptom_level] + " " + recommendation
         factors.append(f"self-reported symptoms ({request.symptom_level})")
     elif request.symptom_level in ("elevated", "mild"):

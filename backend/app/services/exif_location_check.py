@@ -1,15 +1,14 @@
-"""EXIF GPS cross-check -- a soft trust signal, not a fraud-proof.
+"""EXIF GPS cross-check. A soft trust signal, not proof of fraud.
 
 Compares whatever GPS coordinates (if any) are embedded in a submitted
 photo's EXIF metadata against the coordinates the submitter's device
-reported for the submission itself. This can only ever be a soft signal:
-EXIF GPS is easy to strip, easy to spoof, and frequently just absent (many
-browsers and messaging apps strip it on upload/share by default) -- so
-absence of EXIF GPS is treated as "no information," not suspicious. Only a
-*present* EXIF GPS location that disagrees with the submitted location
-pulls the trust score down, and even then it never crushes it to
-near-zero on its own, since a real mismatch can also come from stale
-device GPS or a photo taken while traveling, not just fraud.
+reported for the submission itself. It can only ever be a soft signal:
+EXIF GPS is easy to strip, easy to spoof, and often just missing entirely,
+since plenty of browsers and messaging apps strip it by default on upload.
+So no EXIF GPS just means "no information," not suspicion. Only a location
+that's actually present and disagrees pulls the trust score down, and even
+then it never crushes it to near-zero on its own. A real mismatch could
+just as easily be stale device GPS, or a photo taken while traveling.
 """
 
 import io
@@ -20,18 +19,14 @@ from PIL import Image
 
 from app.services.geohash_utils import haversine_km
 
-# Within this radius, EXIF GPS and the submitted location are treated as
-# describing "the same area" -- matches the search radius already used for
-# AQI station lookups and clean-air-location queries elsewhere in the app,
-# so there's one shared notion of "local" throughout.
+# Same radius already used for AQI station lookups and clean-air-location
+# queries elsewhere, so "local" means the same thing everywhere in the app.
 _CONSISTENT_RADIUS_KM = 50.0
 
-# A mismatch beyond the consistent radius decays the penalty by inverse
-# distance, but never below this floor -- EXIF GPS disagreeing with the
-# submitted location is suspicious, not proof of fraud (stale device GPS,
-# traveling between taking and uploading a photo, etc. are real
-# explanations too), so this signal alone can never crush trust to
-# near-zero.
+# Past the consistent radius, the penalty decays by inverse distance but
+# never drops below this floor. A disagreeing location is suspicious, sure,
+# but not proof of fraud on its own -- so this signal alone shouldn't be
+# able to tank trust to near zero.
 _MIN_PENALTY = 0.3
 
 

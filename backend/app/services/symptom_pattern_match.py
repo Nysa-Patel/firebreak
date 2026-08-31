@@ -1,36 +1,32 @@
-"""Symptom pattern-match scoring -- a second, independent deterministic pass
-over the same checklist data as symptom_rules.py.
+"""Symptom pattern-match scoring.
 
-Not a trained model, not an LLM: it's a weighted-overlap calculation against
-the four fixed condition buckets already defined in symptom_rules.py. Given
-whatever symptoms were actually checked (regardless of which bucket the user
-originally selected), this reports which bucket's *symptom profile* the
-checked set resembles most closely -- purely educational context, separate
-from the urgency-level flag in symptom_rules.py, which stays the one thing
-this app treats as a safety signal.
+A second, independent pass over the same checklist data as
+symptom_rules.py, and just a weighted-overlap calculation against the four
+condition buckets already defined there. Given whatever symptoms were
+actually checked (not necessarily the bucket the user started from), this
+says which bucket's symptom profile the checked set resembles most. Purely
+educational context. The urgency flag in symptom_rules.py is still the one
+thing this app treats as an actual safety signal.
 """
 
 from dataclasses import dataclass
 
 from app.services.symptom_rules import CHECKLISTS, ConditionBucket, Symptom
 
-# Critical symptoms count double in the overlap score -- checking a single
-# critical-tier symptom from a bucket should weigh as much as checking two
-# mild/moderate ones, since that's how symptom_rules.py's own urgency table
-# already treats critical symptoms (see its module docstring).
+# Critical symptoms count double. Checking one critical-tier symptom from a
+# bucket should weigh as much as checking two mild/moderate ones, matching
+# how symptom_rules.py's own urgency table already treats critical symptoms.
 _CRITICAL_WEIGHT = 2
 _STANDARD_WEIGHT = 1
 
-# A match has to clear this percentage of a bucket's total possible weight --
-# below this, the overlap is arguably coincidental (e.g. one shared mild
-# symptom) rather than a real resemblance to that bucket's profile.
+# Below this percentage the overlap could just be one shared mild symptom by
+# coincidence, not a real resemblance to the bucket's profile.
 _MATCH_THRESHOLD_PCT = 40.0
 
-# Need at least this many distinct symptoms checked before reporting any
-# match -- a single checked symptom can trivially clear 40%+ of a small
-# bucket's total weight without meaning anything. Mirrors personal_model.py's
-# refusal to fit a threshold from too few logged days: report "not enough
-# signal" rather than force a result from thin data.
+# A single checked symptom can trivially clear 40%+ of a small bucket's
+# weight without meaning anything, so require at least two. Same idea as
+# personal_model.py refusing to fit a threshold from too few logged days:
+# say "not enough signal" instead of forcing a result out of thin data.
 _MIN_SYMPTOMS_CHECKED = 2
 
 
@@ -71,9 +67,9 @@ def match_pattern(checked_symptom_ids: list[str]) -> PatternMatchResult:
             ),
         )
 
-    # Score every bucket against the checked set regardless of which bucket(s)
-    # the user's declared condition puts in front of them -- the whole point
-    # is to surface a resemblance they might not have picked themselves.
+    # Score every bucket, not just whichever one the user's declared condition
+    # put in front of them. The whole point is surfacing a resemblance they
+    # might not have picked themselves.
     scored = [(bucket, *_bucket_score(bucket, checked_ids)) for bucket in CHECKLISTS]
     best_bucket, best_score, best_matches = max(scored, key=lambda t: t[1])
 
