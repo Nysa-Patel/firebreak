@@ -1,8 +1,12 @@
+import asyncio
+import contextlib
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.database import Base, engine, run_migrations
 from app.routers import ask, aqi, classify, clean_air, geocode, risk, submissions, symptom_flag, symptom_log, trend
+from app.services.aqi_seeder import run_aqi_seeder_forever
 from scripts.seed_db import seed_clean_air_locations
 
 Base.metadata.create_all(bind=engine)
@@ -39,6 +43,20 @@ app.include_router(symptom_log.router)
 app.include_router(symptom_flag.router)
 app.include_router(ask.router)
 app.include_router(geocode.router)
+
+
+@app.on_event("startup")
+async def _start_aqi_seeder() -> None:
+    app.state.aqi_seeder_task = asyncio.create_task(run_aqi_seeder_forever())
+
+
+@app.on_event("shutdown")
+async def _stop_aqi_seeder() -> None:
+    task = getattr(app.state, "aqi_seeder_task", None)
+    if task:
+        task.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await task
 
 
 @app.get("/health")
