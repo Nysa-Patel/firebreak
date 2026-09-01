@@ -48,6 +48,28 @@ def _dedupe_by_min_gap(xs: list[float], ys: list[float]) -> tuple[list[float], l
     return kept_xs, kept_ys
 
 
+def _persistence_response(readings: list[TrendReading], last_aqi: float) -> TrendResponse:
+    """Only one real reading (or one distinct one) to go on -- not enough for
+    Holt's smoothing to say anything about momentum, but no reason to show
+    nothing either. Projects the single known value forward flat, clearly
+    labeled as a placeholder rather than a real trend, so there's something
+    concrete on screen for a brand-new location's first check instead of a
+    blank "not enough data" until someone happens to look twice.
+    """
+    forecast = [ForecastPoint(hours_ahead=h, aqi=round(last_aqi, 1)) for h in _FORECAST_HORIZONS_HOURS]
+    return TrendResponse(
+        direction="steady",
+        basis=(
+            "Only one reading logged for this location so far, so this is that reading held flat, "
+            "not a real trend yet -- check back in about an hour once a second reading comes in."
+        ),
+        readings=readings,
+        forecast=forecast,
+        method="persistence_baseline",
+        disclaimer="Not a trend -- this is the one AQI reading logged so far, held flat as a placeholder.",
+    )
+
+
 def _holt_linear_smoothing(xs: list[float], ys: list[float]) -> tuple[float, float]:
     """Returns (level, trend) at the last timestamp, trend in AQI/hour."""
     level = ys[0]
@@ -79,13 +101,16 @@ def compute_trend(db: Session, lat_bucket: float, lon_bucket: float, hours: int 
 
     readings = [TrendReading(recorded_at=r.recorded_at, aqi=r.aqi) for r in rows]
 
-    if len(rows) < 2:
+    if len(rows) == 0:
         return TrendResponse(
             direction="steady",
-            basis="Not enough recent readings yet to estimate a trend.",
+            basis="No AQI readings logged yet for this location.",
             readings=readings,
             forecast=[],
         )
+
+    if len(rows) < 2:
+        return _persistence_response(readings, rows[-1].aqi)
 
     t0 = rows[0].recorded_at
     raw_xs = [(r.recorded_at - t0).total_seconds() / 3600 for r in rows]
@@ -93,12 +118,7 @@ def compute_trend(db: Session, lat_bucket: float, lon_bucket: float, hours: int 
     xs, ys = _dedupe_by_min_gap(raw_xs, raw_ys)
 
     if len(xs) < 2:
-        return TrendResponse(
-            direction="steady",
-            basis="Not enough distinct recent readings yet to estimate a trend.",
-            readings=readings,
-            forecast=[],
-        )
+        return _persistence_response(readings, ys[-1])
 
     level, trend = _holt_linear_smoothing(xs, ys)
 

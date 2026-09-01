@@ -71,7 +71,7 @@ export default function TrendsPage() {
         {loading ? (
           <div className="h-[220px] animate-pulse" style={{ background: "var(--surface-2)", borderRadius: 8 }} />
         ) : trend ? (
-          <TrendChart readings={trend.readings} forecast={trend.forecast} windowHours={windowHours} />
+          <TrendChart readings={trend.readings} forecast={trend.forecast} windowHours={windowHours} method={trend.method} />
         ) : (
           <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
             Couldn&apos;t load trend data right now.

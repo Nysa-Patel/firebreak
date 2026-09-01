@@ -25,15 +25,17 @@ export function TrendChart({
   readings,
   forecast = [],
   windowHours,
+  method,
 }: {
   readings: TrendReading[];
   forecast?: ForecastPoint[];
   windowHours: number;
+  method?: string;
 }) {
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
 
   const plot = useMemo(() => {
-    if (readings.length < 2) return null;
+    if (readings.length < 1) return null;
 
     const times = readings.map((r) => new Date(r.recorded_at).getTime());
     const values = readings.map((r) => r.aqi);
@@ -66,7 +68,7 @@ export function TrendChart({
       : null;
 
     const yTicks = [0, yMax / 2, yMax];
-    const xTicks = [t0, (t0 + lastActualTime) / 2, lastActualTime];
+    const xTicks = t0 === lastActualTime ? [t0] : [t0, (t0 + lastActualTime) / 2, lastActualTime];
 
     return { points, line, forecastPoints, forecastLine, yMax, yTicks, xTicks, plotWidth, plotHeight };
   }, [readings, forecast]);
@@ -74,8 +76,8 @@ export function TrendChart({
   if (!plot) {
     return (
       <div className="flex items-center justify-center h-[220px] text-sm" style={{ color: "var(--text-muted)" }}>
-        Not enough logged readings yet over the last {windowHours}h to chart -- check back after this
-        area has had a few more AQI lookups.
+        No AQI lookups logged yet for this area over the last {windowHours}h -- checking the current
+        AQI for it will log the first reading.
       </div>
     );
   }
@@ -158,7 +160,7 @@ export function TrendChart({
 
       {forecastPoints.length > 0 && (
         <text x={WIDTH - PAD_RIGHT} y={PAD_TOP + 10} textAnchor="end" fontSize={10} fill="var(--text-muted)">
-          - - projected (Holt&apos;s smoothing)
+          {method === "persistence_baseline" ? "- - flat baseline, not a real trend" : "- - projected (Holt's smoothing)"}
         </text>
       )}
 
