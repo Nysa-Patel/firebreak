@@ -15,14 +15,31 @@ from app.services.airnow_client import get_historical_series
 
 _TREND_BUCKET_DECIMALS = 2
 
+# The backfill call is the expensive one (a bounding-box date-range query,
+# not a single point lookup). Without this, two people checking the same
+# brand-new city in the same instant would both see "not enough readings yet"
+# and both fire it, burning AirNow quota for a location that only needed it
+# fetched once. Process-lifetime only -- fine for a single backend instance,
+# and the second request just proceeds without a backfill it doesn't need
+# once the first one lands.
+_in_progress: set[tuple[float, float]] = set()
+
 
 async def backfill_new_location(db: Session, lat: float, lon: float) -> None:
-    series = await get_historical_series(lat, lon)
-    if not series:
-        return
-
     lat_bucket = round(lat, _TREND_BUCKET_DECIMALS)
     lon_bucket = round(lon, _TREND_BUCKET_DECIMALS)
-    for recorded_at, aqi in series:
-        db.add(AqiReading(lat_bucket=lat_bucket, lon_bucket=lon_bucket, aqi=aqi, recorded_at=recorded_at))
-    db.commit()
+    key = (lat_bucket, lon_bucket)
+
+    if key in _in_progress:
+        return
+    _in_progress.add(key)
+
+    try:
+        series = await get_historical_series(lat, lon)
+        if not series:
+            return
+        for recorded_at, aqi in series:
+            db.add(AqiReading(lat_bucket=lat_bucket, lon_bucket=lon_bucket, aqi=aqi, recorded_at=recorded_at))
+        db.commit()
+    finally:
+        _in_progress.discard(key)
