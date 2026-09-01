@@ -9,6 +9,13 @@ from app.services.aqi_utils import aqi_to_category
 from app.services.geohash_utils import haversine_km
 
 _AIRNOW_URL = "https://www.airnowapi.org/aq/observation/latLong/current/"
+_DATA_URL = "https://www.airnowapi.org/aq/data/"
+
+# Half-width of the bounding box sent to the data API, in degrees -- roughly
+# matches the 50km "distance" radius the current-observation lookup already
+# uses, just expressed as a box since /aq/data/ takes BBOX, not a radius.
+_BACKFILL_BBOX_DEG = 0.5
+_BACKFILL_WINDOW_HOURS = 24
 
 # In-memory TTL cache keyed by (rounded lat, rounded lon). Rounding to 2
 # decimal places (~1.1km) means nearby requests share a cache entry, which
@@ -88,3 +95,58 @@ async def get_current_aqi(lat: float, lon: float) -> AqiResponse:
     )
     _cache[cache_key] = (time.time(), result)
     return result
+
+
+async def get_historical_series(lat: float, lon: float) -> list[tuple[dt.datetime, int]]:
+    """Real recent hourly PM2.5 history for one location, used to backfill a
+    brand-new location's trend on its first lookup.
+
+    This is a different AirNow endpoint from get_current_aqi -- the obvious
+    choice, /aq/observation/latLong/historical/, turned out (tested directly
+    against the live API) to only ever return one same-day daily-summary
+    value no matter which hour you ask for, so it can't actually backfill
+    anything. /aq/data/ is built for date-range queries instead and returns
+    genuine per-hour readings per monitor, which is what this needs.
+    """
+    if not settings.airnow_api_key:
+        return []
+
+    now = dt.datetime.utcnow()
+    start = now - dt.timedelta(hours=_BACKFILL_WINDOW_HOURS)
+    d = _BACKFILL_BBOX_DEG
+    params = {
+        "startDate": start.strftime("%Y-%m-%dT%H"),
+        "endDate": now.strftime("%Y-%m-%dT%H"),
+        "parameters": "PM25",
+        "BBOX": f"{lon - d},{lat - d},{lon + d},{lat + d}",
+        "dataType": "A",
+        "format": "application/json",
+        "verbose": 0,
+        "monitorType": 2,
+        "API_KEY": settings.airnow_api_key,
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=20) as client:
+            resp = await client.get(_DATA_URL, params=params)
+            resp.raise_for_status()
+            rows = resp.json()
+    except httpx.HTTPError:
+        return []
+
+    if not rows:
+        return []
+
+    # The bbox can catch several monitors -- keep only whichever one is
+    # actually closest to the requested point, same station-choice logic
+    # get_current_aqi already applies off the observation endpoint.
+    stations = {(r["Latitude"], r["Longitude"]) for r in rows}
+    nearest = min(stations, key=lambda s: haversine_km(lat, lon, s[0], s[1]))
+
+    series = [
+        (dt.datetime.strptime(r["UTC"], "%Y-%m-%dT%H:%M"), r["AQI"])
+        for r in rows
+        if (r["Latitude"], r["Longitude"]) == nearest
+    ]
+    series.sort(key=lambda p: p[0])
+    return series
